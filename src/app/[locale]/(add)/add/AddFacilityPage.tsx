@@ -47,6 +47,7 @@ export default function AddFacilityPage({ amenities, facilityTypes }: AddFacilit
   const params = useParams();
   const locale = typeof params?.locale === 'string' ? params.locale : Array.isArray(params?.locale) ? params?.locale?.[0] : 'en';
   const [images, setImages] = useState<LocalUpload[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (!isSignedIn) {
@@ -91,6 +92,8 @@ export default function AddFacilityPage({ amenities, facilityTypes }: AddFacilit
       toast.error('User ID is required to submit the form.');
       return;
     }
+
+    setIsSubmitting(true);
 
     try {
       const response = await fetch('/api/submitFacility', {
@@ -141,6 +144,8 @@ export default function AddFacilityPage({ amenities, facilityTypes }: AddFacilit
     } catch (err) {
       console.error('Error submitting facility:', err);
       toast.error('An unexpected error occurred. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -168,6 +173,7 @@ export default function AddFacilityPage({ amenities, facilityTypes }: AddFacilit
             onSubmit={handleFinalSubmit}
             facilityTypes={facilityTypes}
             amenities={amenities}
+            isSubmitting={isSubmitting}
           />
         );
       default:

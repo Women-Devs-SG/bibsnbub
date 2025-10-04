@@ -1,6 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Loader2 } from 'lucide-react';
 import React from 'react';
 
 type ConfirmationStepProps = {
@@ -8,6 +9,7 @@ type ConfirmationStepProps = {
   onSubmit: () => void;
   facilityTypes: { id: string; name: string }[];
   amenities: { id: string; name: string }[];
+  isSubmitting?: boolean;
 };
 
 const Row = ({ label, value }: { label: string; value?: React.ReactNode }) => (
@@ -17,7 +19,7 @@ const Row = ({ label, value }: { label: string; value?: React.ReactNode }) => (
   </div>
 );
 
-const ConfirmationStep: React.FC<ConfirmationStepProps> = ({ formData, onSubmit, facilityTypes, amenities: amenitiesMaster }) => {
+const ConfirmationStep: React.FC<ConfirmationStepProps> = ({ formData, onSubmit, facilityTypes, amenities: amenitiesMaster, isSubmitting = false }) => {
   const {
     facilityTypeId,
     building,
@@ -96,7 +98,18 @@ const ConfirmationStep: React.FC<ConfirmationStepProps> = ({ formData, onSubmit,
       </div>
 
       <div className="flex flex-col sm:flex-row gap-2 sm:justify-end">
-        <Button onClick={onSubmit} className="w-full sm:w-auto">Submit</Button>
+        <Button onClick={onSubmit} disabled={isSubmitting} className="w-full sm:w-auto">
+          {isSubmitting
+            ? (
+                <>
+                  <Loader2 className="animate-spin" />
+                  Submitting...
+                </>
+              )
+            : (
+                'Submit'
+              )}
+        </Button>
       </div>
     </div>
   );
