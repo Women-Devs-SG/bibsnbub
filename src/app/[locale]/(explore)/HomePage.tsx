@@ -3,7 +3,9 @@
 import type { Facility, FacilityType, Location } from '@/models/types';
 import type { Address } from '@/types/Address'; // Import Address type
 import CategoryScroller from '@/components/CategoryScroller';
+import EmptyState from '@/components/EmptyState';
 import FacilityCard from '@/components/FacilityCard';
+import RadiusFilter from '@/components/RadiusFilter';
 import SearchBar from '@/components/SearchBar';
 import { calculateDistance, handleUseCurrentLocation } from '@/lib/utils';
 import { useTranslations } from 'next-intl';
@@ -26,9 +28,17 @@ export default function HomePage({
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [sortedLocations, setSortedLocations] = useState<Location[]>(locationsData);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedRadius, setSelectedRadius] = useState<number>(10); // Default 10km radius
+  const [hasSearched, setHasSearched] = useState<boolean>(false);
 
   useEffect(() => {
     setUserLocation({ latitude: 1.287953, longitude: 103.851784 }); // Default location center of Singapore
+
+    // Restore radius preference from localStorage
+    const savedRadius = localStorage.getItem('facilitySearchRadius');
+    if (savedRadius) {
+      setSelectedRadius(Number.parseInt(savedRadius, 10));
+    }
   }, []);
 
   // Keep sortedLocations in sync when server data updates after navigation/refresh
@@ -36,9 +46,15 @@ export default function HomePage({
     setSortedLocations(locationsData);
   }, [locationsData]);
 
+  // Save radius preference to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('facilitySearchRadius', selectedRadius.toString());
+  }, [selectedRadius]);
+
   const handleSearch = (address: Address) => {
     const { latitude, longitude } = address;
     setUserLocation({ latitude, longitude });
+    setHasSearched(true);
 
     const sorted = [...locationsData].sort((a, b) => {
       const distanceA = calculateDistance(latitude, longitude, a.latitude, a.longitude);
@@ -50,11 +66,31 @@ export default function HomePage({
   };
 
   const filteredFacilities = facilitiesData?.filter((facility) => {
+    // Category filtering
     if (selectedCategory === 'Diaper Changing Station') {
-      return facility.has_diaper_changing_station;
+      if (!facility.has_diaper_changing_station) {
+        return false;
+      }
     } else if (selectedCategory === 'Lactation Room') {
-      return facility.has_lactation_room;
+      if (!facility.has_lactation_room) {
+        return false;
+      }
     }
+
+    // Distance filtering - only apply if user has searched for a location
+    if (hasSearched && userLocation) {
+      const facilityLocation = locationsData.find(loc => loc.id === facility.location_id);
+      if (facilityLocation) {
+        const distance = calculateDistance(
+          userLocation.latitude,
+          userLocation.longitude,
+          facilityLocation.latitude,
+          facilityLocation.longitude,
+        );
+        return distance <= selectedRadius;
+      }
+    }
+
     return true;
   });
 
@@ -86,34 +122,51 @@ export default function HomePage({
             () => toast.warning('Unable to retrieve your location. Please try again.'),
           )}
       />
+
+      {hasSearched && (
+        <RadiusFilter
+          selectedRadius={selectedRadius}
+          onRadiusChange={setSelectedRadius}
+        />
+      )}
+
       <CategoryScroller onCategorySelect={setSelectedCategory} />
 
-      {sortedLocations.map((location) => {
-        const locationFacilities = filteredFacilities.filter(
-          facility => facility.location_id === location.id,
-        );
-
-        return locationFacilities.map((facility) => {
-          const facilityType = facilityTypesData.find(
-            type => type.id === facility.facility_type_id,
+      {(() => {
+        const facilitiesToShow = sortedLocations.flatMap((location) => {
+          const locationFacilities = filteredFacilities.filter(
+            facility => facility.location_id === location.id,
           );
 
-          if (!facilityType) {
-            return null;
-          }
+          return locationFacilities.map((facility) => {
+            const facilityType = facilityTypesData.find(
+              type => type.id === facility.facility_type_id,
+            );
 
-          return (
-            <FacilityCard
-              key={facility.id}
-              location={location}
-              facility={facility}
-              facilityType={facilityType}
-              userLatitude={userLocation?.latitude ?? 0}
-              userLongitude={userLocation?.longitude ?? 0}
-            />
-          );
+            if (!facilityType) {
+              return null;
+            }
+
+            return (
+              <FacilityCard
+                key={facility.id}
+                location={location}
+                facility={facility}
+                facilityType={facilityType}
+                userLatitude={userLocation?.latitude ?? 0}
+                userLongitude={userLocation?.longitude ?? 0}
+              />
+            );
+          }).filter(Boolean);
         });
-      })}
+
+        // Show EmptyState if user has searched and no facilities found within radius
+        if (hasSearched && facilitiesToShow.length === 0) {
+          return <EmptyState radius={selectedRadius} hasSearched={hasSearched} />;
+        }
+
+        return facilitiesToShow;
+      })()}
     </div>
   );
 }
