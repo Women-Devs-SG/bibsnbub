@@ -55,11 +55,7 @@ export default function AddFacilityPage({ amenities, facilityTypes }: AddFacilit
     }
   }, [isSignedIn, router]);
 
-  // Restore cached progress on mount (dev- and prod-safe; client-side only)
   useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
     try {
       const raw = sessionStorage.getItem('add-facility-form');
       if (raw) {
@@ -77,7 +73,6 @@ export default function AddFacilityPage({ amenities, facilityTypes }: AddFacilit
     } catch {}
   }, []);
 
-  // Cache progress on changes
   useEffect(() => {
     if (typeof window === 'undefined') {
       return;
@@ -88,6 +83,9 @@ export default function AddFacilityPage({ amenities, facilityTypes }: AddFacilit
   }, [formData, images, step]);
 
   const handleFinalSubmit = async () => {
+    if (isSubmitting) {
+      return; // prevent duplicate clicks
+    }
     if (!userId) {
       toast.error('User ID is required to submit the form.');
       return;
@@ -96,6 +94,8 @@ export default function AddFacilityPage({ amenities, facilityTypes }: AddFacilit
     setIsSubmitting(true);
 
     try {
+      toast.loading('Submitting facility…');
+      setIsSubmitting(true);
       const response = await fetch('/api/submitFacility', {
         method: 'POST',
         headers: {
@@ -145,6 +145,10 @@ export default function AddFacilityPage({ amenities, facilityTypes }: AddFacilit
       console.error('Error submitting facility:', err);
       toast.error('An unexpected error occurred. Please try again.');
     } finally {
+      // Dismiss any loading toast(s)
+      try {
+        toast.dismiss();
+      } catch {}
       setIsSubmitting(false);
     }
   };

@@ -1,0 +1,81 @@
+name: Feature request
+description: Suggest an idea to improve the project
+labels: [enhancement]
+title: 'feat: <short description>'
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the suggestion! Please provide details to help us evaluate the request.
+
+  - type: input
+    id: area
+    attributes:
+      label: Affected area
+      description: Page, route, or component (e.g., src/app/[locale]/...)
+      placeholder: src/app/[locale]/(explore)/facility/[id]/page.tsx
+    validations:
+      required: false
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem to solve
+      description: What problem does this feature solve? Who benefits?
+      placeholder: Users struggle to ... because ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Describe the feature and how it should work.
+      placeholder: I propose we ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Any alternative solutions or features you've considered.
+    validations:
+      required: false
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Out of scope
+      description: What is explicitly NOT part of this request?
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Define conditions that must be met for this to be considered done.
+      options:
+        - label: Clear UX/UI behavior defined
+        - label: Edge cases considered
+        - label: Tests added/updated
+        - label: Documentation updated
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - P0 - Critical
+        - P1 - High
+        - P2 - Medium
+        - P3 - Low
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: Links, mockups, or references.

@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/command';
 import { Navigation, SearchX } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 type SearchBarProps = {
   onSearchAction: (locationDetails: Address) => void;
@@ -27,14 +27,53 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearchAction, onUseCurre
   const [suggestions, setSuggestions] = useState<Address[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isUsingCurrentLocation, setIsUsingCurrentLocation] = useState(false);
+  const triggerInputRef = useRef<HTMLInputElement>(null);
+  const dialogInputRef = useRef<HTMLInputElement>(null);
 
   const authToken = process.env.ONEMAP_API_KEY || '';
+
+  const moveCaretToEndIfFullySelected = (inputElement: HTMLInputElement | null) => {
+    if (!inputElement) {
+      return;
+    }
+
+    const { selectionStart, selectionEnd, value } = inputElement;
+    const isFullySelected
+      = selectionStart === 0 && selectionEnd === value.length && value.length > 0;
+
+    if (!isFullySelected) {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      const nextValueLength = inputElement.value.length;
+      inputElement.setSelectionRange(nextValueLength, nextValueLength);
+    });
+  };
 
   useEffect(() => {
     if (initialLocation) {
       setLocation(initialLocation.address || '');
     }
   }, [initialLocation]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const inputElement = dialogInputRef.current;
+
+    if (!inputElement || document.activeElement !== inputElement) {
+      return;
+    }
+
+    const frame = requestAnimationFrame(() => {
+      moveCaretToEndIfFullySelected(inputElement);
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [isOpen, location]);
 
   const fetchSuggestions = async (query: string): Promise<Address[]> => {
     if (!query.trim()) {
@@ -101,13 +140,15 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearchAction, onUseCurre
       {/* Search Bar */}
       <Command className="rounded-lg border shadow-md md:min-w-[450px]" onClick={() => setIsOpen(true)}>
         <CommandInput
+          ref={triggerInputRef}
           placeholder={t('SearchBar.placeholder')}
           value={location}
-          onValueChange={(value) => {
+          onValueChange={(value: string) => {
             setLocation(value);
             fetchSuggestions(value);
             setIsOpen(true);
             setIsUsingCurrentLocation(false);
+            moveCaretToEndIfFullySelected(triggerInputRef.current);
           }}
           className={`w-full border-none focus:ring-0 ${
             isUsingCurrentLocation ? 'text-blue-400' : ''
@@ -117,12 +158,14 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearchAction, onUseCurre
 
       <CommandDialog open={isOpen} onOpenChange={setIsOpen}>
         <CommandInput
+          ref={dialogInputRef}
           placeholder={t('SearchBar.placeholder')}
           value={location}
-          onValueChange={(value) => {
+          onValueChange={(value: string) => {
             setLocation(value);
             fetchSuggestions(value);
             setIsUsingCurrentLocation(false);
+            moveCaretToEndIfFullySelected(dialogInputRef.current ?? triggerInputRef.current);
           }}
         />
         <CommandList>

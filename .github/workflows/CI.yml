@@ -15,6 +15,10 @@ jobs:
 
     name: Build with ${{ matrix.node-version }}
     runs-on: ubuntu-latest
+    env:
+      CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+      NEXT_PUBLIC_CLERK_SIGN_IN_URL: ${{ secrets.NEXT_PUBLIC_CLERK_SIGN_IN_URL }}
 
     steps:
       - uses: actions/checkout@v4
@@ -23,6 +27,23 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
+      - name: Ensure required env vars (use secrets if present, else dummy)
+        run: |
+          if [ -n "${{ secrets.CLERK_SECRET_KEY }}" ]; then
+            echo "CLERK_SECRET_KEY=${{ secrets.CLERK_SECRET_KEY }}" >> $GITHUB_ENV
+          else
+            echo "CLERK_SECRET_KEY=dummy" >> $GITHUB_ENV
+          fi
+          if [ -n "${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}" ]; then
+            echo "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}" >> $GITHUB_ENV
+          else
+            echo "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=dummy" >> $GITHUB_ENV
+          fi
+          if [ -n "${{ secrets.NEXT_PUBLIC_CLERK_SIGN_IN_URL }}" ]; then
+            echo "NEXT_PUBLIC_CLERK_SIGN_IN_URL=${{ secrets.NEXT_PUBLIC_CLERK_SIGN_IN_URL }}" >> $GITHUB_ENV
+          else
+            echo "NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in" >> $GITHUB_ENV
+          fi
       - run: npm ci
       - run: npm run build
 
@@ -33,6 +54,10 @@ jobs:
 
     name: Run all tests
     runs-on: ubuntu-latest
+    env:
+      CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+      NEXT_PUBLIC_CLERK_SIGN_IN_URL: ${{ secrets.NEXT_PUBLIC_CLERK_SIGN_IN_URL }}
 
     steps:
       - uses: actions/checkout@v4
@@ -43,6 +68,23 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
+      - name: Ensure required env vars (use secrets if present, else dummy)
+        run: |
+          if [ -n "${{ secrets.CLERK_SECRET_KEY }}" ]; then
+            echo "CLERK_SECRET_KEY=${{ secrets.CLERK_SECRET_KEY }}" >> $GITHUB_ENV
+          else
+            echo "CLERK_SECRET_KEY=dummy" >> $GITHUB_ENV
+          fi
+          if [ -n "${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}" ]; then
+            echo "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}" >> $GITHUB_ENV
+          else
+            echo "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=dummy" >> $GITHUB_ENV
+          fi
+          if [ -n "${{ secrets.NEXT_PUBLIC_CLERK_SIGN_IN_URL }}" ]; then
+            echo "NEXT_PUBLIC_CLERK_SIGN_IN_URL=${{ secrets.NEXT_PUBLIC_CLERK_SIGN_IN_URL }}" >> $GITHUB_ENV
+          else
+            echo "NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in" >> $GITHUB_ENV
+          fi
       - run: npm ci
 
       - name: Build Next.js for E2E tests
@@ -63,10 +105,10 @@ jobs:
       - name: Run unit tests
         run: npm run test -- --coverage
 
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v5
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      # - name: Upload coverage reports to Codecov
+      #   uses: codecov/codecov-action@v5
+      #   env:
+      #     CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Install Playwright (used for Storybook and E2E tests)
         run: npx playwright install --with-deps
@@ -86,5 +128,3 @@ jobs:
           name: test-results
           path: test-results/
           retention-days: 7
-
-  # Crowdin synchronization job removed (translations are managed in-repo)

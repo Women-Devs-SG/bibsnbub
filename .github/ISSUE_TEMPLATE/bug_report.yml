@@ -1,0 +1,93 @@
+name: Bug report
+description: Report a reproducible problem to help us improve
+labels: [bug]
+title: 'fix: <short description>'
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug! Please fill out the details below.
+
+  - type: input
+    id: area
+    attributes:
+      label: Affected area
+      description: Page, route, or component (e.g., src/app/[locale]/...)
+      placeholder: src/app/[locale]/(explore)/facility/[id]/page.tsx
+    validations:
+      required: false
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the bug
+      description: What happened? Include relevant logs or error messages.
+      placeholder: A clear and concise description of the problem...
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Provide a minimal, reliable reproduction if possible.
+      placeholder: |
+        1. Go to ...
+        2. Click on ...
+        3. See error ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      placeholder: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots or recordings
+      description: Paste images or links to screen recordings.
+    validations:
+      required: false
+
+  - type: input
+    id: version
+    attributes:
+      label: App/commit version
+      description: Branch name or commit SHA if relevant.
+      placeholder: main @ abc1234
+    validations:
+      required: false
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, browser, device, and environment (local/staging/prod)
+      placeholder: Windows 11, Edge 128, Desktop, staging
+    validations:
+      required: false
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - P0 - Critical (blocks release)
+        - P1 - High
+        - P2 - Medium
+        - P3 - Low
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: Links to related issues/PRs or any other context.
+    validations:
+      required: false
