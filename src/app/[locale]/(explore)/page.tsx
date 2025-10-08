@@ -1,4 +1,3 @@
-import { db } from '@/libs/DB';
 import { facilities, facilityTypes, locations } from '@/models/Schema';
 import { tryCreateClient } from '@/utils/supabase/server';
 import HomePage from './HomePage';
@@ -30,41 +29,47 @@ export default async function Page() {
       facilityTypesData = typeRes.data ?? [];
       // If any dataset is empty, selectively fill from local DB
       if (!locationsData.length || !facilitiesData.length || !facilityTypesData.length) {
-        const [locs, facs, types] = await Promise.all([
-          !locationsData.length ? db.select().from(locations) : Promise.resolve(null),
-          !facilitiesData.length ? db.select().from(facilities) : Promise.resolve(null),
-          !facilityTypesData.length ? db.select().from(facilityTypes) : Promise.resolve(null),
-        ]);
+        if (!process.env.NEXT_RUNTIME) {
+          // During build-time, avoid initializing DB
+          // Leave arrays as-is; the later fallback will handle empty state
+        } else {
+          const { db } = await import('@/libs/DB');
+          const [locs, facs, types] = await Promise.all([
+            !locationsData.length ? db.select().from(locations) : Promise.resolve(null),
+            !facilitiesData.length ? db.select().from(facilities) : Promise.resolve(null),
+            !facilityTypesData.length ? db.select().from(facilityTypes) : Promise.resolve(null),
+          ]);
 
-        if (!locationsData.length && Array.isArray(locs)) {
-          locationsData = locs.map((l: any) => ({
-            id: l.id,
-            building: l.building ?? undefined,
-            block: l.block ?? undefined,
-            road: l.road ?? undefined,
-            address: l.address,
-            latitude: typeof l.latitude === 'string' ? Number(l.latitude) : l.latitude,
-            longitude: typeof l.longitude === 'string' ? Number(l.longitude) : l.longitude,
-          }));
-        }
+          if (!locationsData.length && Array.isArray(locs)) {
+            locationsData = locs.map((l: any) => ({
+              id: l.id,
+              building: l.building ?? undefined,
+              block: l.block ?? undefined,
+              road: l.road ?? undefined,
+              address: l.address,
+              latitude: typeof l.latitude === 'string' ? Number(l.latitude) : l.latitude,
+              longitude: typeof l.longitude === 'string' ? Number(l.longitude) : l.longitude,
+            }));
+          }
 
-        if (!facilitiesData.length && Array.isArray(facs)) {
-          facilitiesData = facs.map((f: any) => ({
-            id: f.id,
-            location_id: f.locationId,
-            facility_type_id: f.facilityTypeId,
-            floor: f.floor ?? '',
-            how_to_access: f.howToAccess ?? null,
-            description: f.description ?? null,
-            has_diaper_changing_station: !!f.hasDiaperChangingStation,
-            has_lactation_room: !!f.hasLactationRoom,
-            created_by: f.createdBy,
-            created_at: f.createdAt?.toISOString?.() ?? String(f.createdAt ?? ''),
-          }));
-        }
+          if (!facilitiesData.length && Array.isArray(facs)) {
+            facilitiesData = facs.map((f: any) => ({
+              id: f.id,
+              location_id: f.locationId,
+              facility_type_id: f.facilityTypeId,
+              floor: f.floor ?? '',
+              how_to_access: f.howToAccess ?? null,
+              description: f.description ?? null,
+              has_diaper_changing_station: !!f.hasDiaperChangingStation,
+              has_lactation_room: !!f.hasLactationRoom,
+              created_by: f.createdBy,
+              created_at: f.createdAt?.toISOString?.() ?? String(f.createdAt ?? ''),
+            }));
+          }
 
-        if (!facilityTypesData.length && Array.isArray(types)) {
-          facilityTypesData = types.map((t: any) => ({ id: t.id, name: t.name }));
+          if (!facilityTypesData.length && Array.isArray(types)) {
+            facilityTypesData = types.map((t: any) => ({ id: t.id, name: t.name }));
+          }
         }
       }
     } catch (e) {
@@ -74,7 +79,19 @@ export default async function Page() {
   }
 
   if (!locationsData.length && !facilitiesData.length && !facilityTypesData.length) {
-    // Local dev: PGlite/Postgres via Drizzle.
+    // Build-time (static generation) has no runtime. Avoid DB initialization.
+    if (!process.env.NEXT_RUNTIME) {
+      return (
+        <HomePage
+          locationsData={[]}
+          facilitiesData={[]}
+          facilityTypesData={[]}
+        />
+      );
+    }
+
+    // Local dev: PGlite/Postgres via Drizzle (dynamic import avoids top-level init during build)
+    const { db } = await import('@/libs/DB');
     // Map camelCase DB rows from Drizzle to snake_case API types expected by HomePage.
     const [locs, facs, types] = await Promise.all([
       db.select().from(locations),

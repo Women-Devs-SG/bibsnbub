@@ -45,8 +45,9 @@ export default async function RootLayout(props: {
   setRequestLocale(locale);
 
   // Verify the request with Arcjet
-  const runtime = process.env.NEXT_RUNTIME; // undefined during build-time static generation
-  if (Env.ARCJET_KEY && runtime) {
+  const isBuild = process.env.NEXT_PHASE === 'phase-production-build';
+  const runtime = process.env.NEXT_RUNTIME; // may be defined in some contexts
+  if (Env.ARCJET_KEY && !isBuild && runtime) {
     try {
       const req = await request();
       const decision = await aj.protect(req);
