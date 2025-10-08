@@ -48,6 +48,7 @@ export default function AddFacilityPage({ amenities, facilityTypes }: AddFacilit
   const locale = typeof params?.locale === 'string' ? params.locale : Array.isArray(params?.locale) ? params?.locale?.[0] : 'en';
   const [images, setImages] = useState<LocalUpload[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isSignedIn) {
@@ -92,6 +93,7 @@ export default function AddFacilityPage({ amenities, facilityTypes }: AddFacilit
     }
 
     setIsSubmitting(true);
+    setSubmitError(null); // Clear any previous errors
 
     try {
       toast.loading('Submitting facility…');
@@ -112,12 +114,16 @@ export default function AddFacilityPage({ amenities, facilityTypes }: AddFacilit
           result = JSON.parse(raw);
         } catch (e) {
           console.error('Failed to parse JSON response:', raw, e);
-          toast.error('Server returned an unexpected response. Please try again.');
+          const errorMsg = 'Server returned an unexpected response. Please try again.';
+          setSubmitError(errorMsg);
+          toast.error(errorMsg);
           return;
         }
       } else {
         console.error('Non-JSON response:', raw);
-        toast.error('Server error. Please try again.');
+        const errorMsg = 'Server error. Please try again.';
+        setSubmitError(errorMsg);
+        toast.error(errorMsg);
         return;
       }
 
@@ -129,6 +135,7 @@ export default function AddFacilityPage({ amenities, facilityTypes }: AddFacilit
             await uploadFacilityImages(result.facilityId, images);
           } catch (e) {
             console.error('Failed to upload images', e);
+            toast.error('Facility created, but failed to upload images. Please try again later.');
           }
         }
         // clear cached state for the wizard
@@ -139,11 +146,15 @@ export default function AddFacilityPage({ amenities, facilityTypes }: AddFacilit
         router.push(`/${locale}?t=${Date.now()}`);
         router.refresh();
       } else {
-        toast.warning(result.message || 'Failed to submit the facility.');
+        const errorMsg = result.message || 'Failed to submit the facility. Please try again.';
+        setSubmitError(errorMsg);
+        toast.error(errorMsg);
       }
     } catch (err) {
       console.error('Error submitting facility:', err);
-      toast.error('An unexpected error occurred. Please try again.');
+      const errorMsg = 'An unexpected error occurred. Please try again.';
+      setSubmitError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       // Dismiss any loading toast(s)
       try {
@@ -174,10 +185,8 @@ export default function AddFacilityPage({ amenities, facilityTypes }: AddFacilit
         return (
           <ConfirmationStep
             formData={formData}
-            onSubmit={handleFinalSubmit}
             facilityTypes={facilityTypes}
             amenities={amenities}
-            isSubmitting={isSubmitting}
           />
         );
       default:
@@ -190,12 +199,63 @@ export default function AddFacilityPage({ amenities, facilityTypes }: AddFacilit
       <h1 className="text-2xl font-bold mb-4">Add a New Facility</h1>
       <ProgressBar currentStep={step} totalSteps={6} />
       {renderStep()}
-      <NavigationButtons
-        currentStep={step}
-        totalSteps={6}
-        onNext={() => setStep(prev => prev + 1)}
-        onBack={() => setStep(prev => prev - 1)}
-      />
+      {submitError && step === 6 && (
+        <div className="mt-4 p-4 border border-destructive bg-destructive/10 rounded-lg">
+          <div className="flex items-start gap-3">
+            <svg className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div className="flex-1">
+              <h4 className="font-semibold text-destructive mb-1">Submission Failed</h4>
+              <p className="text-sm text-destructive/90">{submitError}</p>
+            </div>
+          </div>
+        </div>
+      )}
+      {step === 6
+        ? (
+            <div className="flex justify-between mt-4">
+              <button
+                type="button"
+                onClick={() => setStep(prev => prev - 1)}
+                className="inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                onClick={handleFinalSubmit}
+                disabled={isSubmitting}
+                className="inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+              >
+                {isSubmitting
+                  ? (
+                      <>
+                        <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Submitting...
+                      </>
+                    )
+                  : submitError
+                    ? (
+                        'Retry Submission'
+                      )
+                    : (
+                        'Submit'
+                      )}
+              </button>
+            </div>
+          )
+        : (
+            <NavigationButtons
+              currentStep={step}
+              totalSteps={6}
+              onNext={() => setStep(prev => prev + 1)}
+              onBack={() => setStep(prev => prev - 1)}
+            />
+          )}
     </div>
   );
 }
