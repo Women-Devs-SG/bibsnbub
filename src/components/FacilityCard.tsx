@@ -22,17 +22,6 @@ type FacilityCardProps = {
   userLongitude: number;
 };
 
-const truncate = (text: string, maxLength = 63): string => {
-  if (typeof text !== 'string') {
-    return '';
-  }
-  if (text.length > maxLength) {
-    return `${text.slice(0, maxLength)}.....`;
-  } else {
-    return text;
-  }
-};
-
 const FacilityCard: React.FC<FacilityCardProps> = ({ location, facility, facilityType, userLatitude: latitude, userLongitude: longitude }) => {
   const getFacilityIcon = (facilityTypeName: string) => {
     switch (facilityTypeName) {
@@ -80,8 +69,8 @@ const FacilityCard: React.FC<FacilityCardProps> = ({ location, facility, facilit
             </h2>
             {facility.floor && <Badge>{facility.floor}</Badge>}
           </div>
-          <div className="text-black italic text-no">
-            {truncate(facility.description || '')}
+          <div className="text-black italic line-clamp-2 md:line-clamp-1">
+            {facility.description || ''}
           </div>
           <div className="text-gray-600 flex items-center mt-2">
             <MapPin className="w-4 h-4 mr-1" />
