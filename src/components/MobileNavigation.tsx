@@ -44,6 +44,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
         <div className="relative">
           <button
             type="button"
+            aria-label="Language Switcher"
             className="flex flex-col items-center text-gray-500"
             onClick={() => setLocaleMenuOpen(!localeMenuOpen)}
           >

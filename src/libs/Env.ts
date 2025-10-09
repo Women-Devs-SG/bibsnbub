@@ -8,6 +8,8 @@ export const Env = createEnv({
     // In production we require DATABASE_URL. In local dev/test we may use PGlite instead.
     DATABASE_URL: z.string().optional(),
     PGLITE_DATA_DIR: z.string().optional(),
+    // When set (e.g. to "1"), force using local PGlite even if NODE_ENV is production
+    FORCE_LOCAL_DB: z.string().optional(),
     LOGTAIL_SOURCE_TOKEN: z.string().optional(),
   },
   client: {
@@ -23,6 +25,7 @@ export const Env = createEnv({
     CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
     DATABASE_URL: process.env.DATABASE_URL,
     PGLITE_DATA_DIR: process.env.PGLITE_DATA_DIR,
+    FORCE_LOCAL_DB: process.env.FORCE_LOCAL_DB,
     LOGTAIL_SOURCE_TOKEN: process.env.LOGTAIL_SOURCE_TOKEN,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
