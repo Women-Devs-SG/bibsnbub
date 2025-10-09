@@ -69,7 +69,7 @@ const FacilityCard: React.FC<FacilityCardProps> = ({ location, facility, facilit
             </h2>
             {facility.floor && <Badge>{facility.floor}</Badge>}
           </div>
-          <div className="text-black italic line-clamp-2 md:line-clamp-1">
+          <div className="text-black italic line-clamp-2">
             {facility.description || ''}
           </div>
           <div className="text-gray-600 flex items-center mt-2">
