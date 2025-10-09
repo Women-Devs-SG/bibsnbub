@@ -82,7 +82,7 @@ export default async function RootLayout(props: {
               currentLocale={locale}
               availableLocales={routing.locales}
             >
-              <div className="min-h-screen flex flex-col items-center justify-center p-4 pb-24 md:pb-28">
+              <div className="min-h-screen flex flex-col items-center p-4 pb-24 md:pb-28 md:pt-20">
                 {props.children}
               </div>
               <Toaster />
