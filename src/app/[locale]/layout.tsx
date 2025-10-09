@@ -45,18 +45,25 @@ export default async function RootLayout(props: {
   setRequestLocale(locale);
 
   // Verify the request with Arcjet
-  if (Env.ARCJET_KEY) {
-    const req = await request();
-    const decision = await aj.protect(req);
+  const isBuild = process.env.NEXT_PHASE === 'phase-production-build';
+  const runtime = process.env.NEXT_RUNTIME; // may be defined in some contexts
+  if (Env.ARCJET_KEY && !isBuild && runtime) {
+    try {
+      const req = await request();
+      const decision = await aj.protect(req);
 
-    // These errors are handled by the global error boundary, but you could also
-    // redirect or show a custom error page
-    if (decision.isDenied()) {
-      if (decision.reason.isBot()) {
-        throw new Error('No bots allowed');
+      // These errors are handled by the global error boundary, but you could also
+      // redirect or show a custom error page
+      if (decision.isDenied()) {
+        if (decision.reason.isBot()) {
+          throw new Error('No bots allowed');
+        }
+
+        throw new Error('Access denied');
       }
-
-      throw new Error('Access denied');
+    } catch (err) {
+      // Avoid failing build-time config collection if Arcjet is unavailable
+      console.warn('[Arcjet] Skipping protection during static generation:', err);
     }
   }
 
