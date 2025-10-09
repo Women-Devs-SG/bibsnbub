@@ -102,6 +102,8 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearchAction, onUseCurre
           postalCode: result.POSTAL || '',
           latitude: Number.parseFloat(result.LATITUDE),
           longitude: Number.parseFloat(result.LONGITUDE),
+          opensAt: null,
+          closesAt: null,
         }));
         setSuggestions(mappedSuggestions);
       } else {

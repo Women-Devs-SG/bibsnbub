@@ -2,7 +2,12 @@
   "Index": {
     "meta_title": "点点BB",
     "meta_by": "创建者：",
-    "meta_description": "为人父母的点点滴滴."
+    "meta_description": "为人父母的点点滴滴.",
+    "results_summary": "显示第 {start} – {end} 个，共 {total} 个设施。",
+    "results_mobile_summary": "第 {current} / {total} 页",
+    "results_empty": "暂无符合条件的设施。",
+    "pagination_previous": "上一页",
+    "pagination_next": "下一页"
   },
   "CategoryScroller": {
     "all": "全部",

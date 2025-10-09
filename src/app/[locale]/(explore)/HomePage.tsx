@@ -1,42 +1,84 @@
 'use client';
 
+import type { FacilityCategorySlug } from '@/lib/facility-categories';
 import type { Facility, FacilityType, Location } from '@/models/types';
-import type { Address } from '@/types/Address'; // Import Address type
+import type { Address } from '@/types/Address';
+import type { ReactNode } from 'react';
 import CategoryScroller from '@/components/CategoryScroller';
 import FacilityCard from '@/components/FacilityCard';
 import SearchBar from '@/components/SearchBar';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
 import { calculateDistance, handleUseCurrentLocation } from '@/lib/utils';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useCallback, useEffect, useMemo, useState, useTransition } from 'react';
 import { toast } from 'sonner';
+
+type PaginationInfo = {
+  currentPage: number;
+  pageSize: number;
+  totalFacilities: number;
+};
+
+type PageDisplayItem =
+  | { kind: 'page'; value: number }
+  | { kind: 'ellipsis'; id: string };
 
 type Props = {
   locationsData: Location[];
   facilitiesData: Facility[];
   facilityTypesData: FacilityType[];
+  pagination: PaginationInfo;
+  selectedCategory: FacilityCategorySlug | null;
 };
+
+const DEFAULT_LOCATION = { latitude: 1.287953, longitude: 103.851784 } as const;
 
 export default function HomePage({
   locationsData,
   facilitiesData,
   facilityTypesData,
+  pagination,
+  selectedCategory,
 }: Props) {
   const t = useTranslations('Index');
+  const categoryT = useTranslations('CategoryScroller');
+  const router = useRouter();
+  const pathname = usePathname() ?? '/';
+  const searchParams = useSearchParams();
+  const searchParamsString = searchParams?.toString() ?? '';
+  const [isPending, startTransition] = useTransition();
+
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [sortedLocations, setSortedLocations] = useState<Location[]>(locationsData);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [activeCategory, setActiveCategory] = useState<FacilityCategorySlug | null>(selectedCategory);
 
   useEffect(() => {
-    setUserLocation({ latitude: 1.287953, longitude: 103.851784 }); // Default location center of Singapore
+    setUserLocation({
+      latitude: DEFAULT_LOCATION.latitude,
+      longitude: DEFAULT_LOCATION.longitude,
+    });
   }, []);
 
-  // Keep sortedLocations in sync when server data updates after navigation/refresh
   useEffect(() => {
     setSortedLocations(locationsData);
   }, [locationsData]);
 
-  const handleSearch = (address: Address) => {
+  useEffect(() => {
+    setActiveCategory(selectedCategory);
+  }, [selectedCategory]);
+
+  const handleSearch = useCallback((address: Address) => {
     const { latitude, longitude } = address;
     setUserLocation({ latitude, longitude });
 
@@ -47,19 +89,172 @@ export default function HomePage({
     });
 
     setSortedLocations(sorted);
-  };
+  }, [locationsData]);
 
-  const filteredFacilities = facilitiesData?.filter((facility) => {
-    if (selectedCategory === 'Diaper Changing Station') {
-      return facility.has_diaper_changing_station;
-    } else if (selectedCategory === 'Lactation Room') {
-      return facility.has_lactation_room;
+  const handleCategorySelect = useCallback((category: FacilityCategorySlug | null) => {
+    setActiveCategory(category);
+    const params = new URLSearchParams(searchParamsString);
+
+    if (category) {
+      params.set('category', category);
+    } else {
+      params.delete('category');
     }
-    return true;
-  });
+    params.delete('page');
+
+    startTransition(() => {
+      const query = params.toString();
+      router.push(query ? `${pathname}?${query}` : pathname);
+    });
+  }, [pathname, router, searchParamsString]);
+
+  const handlePageChange = useCallback((page: number) => {
+    if (page === pagination.currentPage) {
+      return;
+    }
+
+    const totalAvailablePages = pagination.totalFacilities > 0
+      ? Math.ceil(pagination.totalFacilities / pagination.pageSize)
+      : 1;
+    const safePage = Math.max(1, Math.min(page, totalAvailablePages));
+    const params = new URLSearchParams(searchParamsString);
+
+    if (safePage === 1) {
+      params.delete('page');
+    } else {
+      params.set('page', String(safePage));
+    }
+
+    if (activeCategory) {
+      params.set('category', activeCategory);
+    } else {
+      params.delete('category');
+    }
+
+    startTransition(() => {
+      const query = params.toString();
+      router.push(query ? `${pathname}?${query}` : pathname);
+    });
+  }, [activeCategory, pagination.currentPage, pagination.pageSize, pagination.totalFacilities, pathname, router, searchParamsString]);
+
+  const filteredFacilities = useMemo(() => {
+    if (!activeCategory) {
+      return facilitiesData;
+    }
+
+    if (activeCategory === 'diaper') {
+      return facilitiesData.filter(facility => facility.has_diaper_changing_station);
+    }
+
+    return facilitiesData.filter(facility => facility.has_lactation_room);
+  }, [activeCategory, facilitiesData]);
+
+  const facilitiesByLocation = useMemo(() => {
+    const map = new Map<number, Facility[]>();
+
+    for (const facility of filteredFacilities) {
+      const existing = map.get(facility.location_id) ?? [];
+      existing.push(facility);
+      map.set(facility.location_id, existing);
+    }
+
+    return map;
+  }, [filteredFacilities]);
+
+  const visibleLocations = useMemo(
+    () => sortedLocations.filter(location => facilitiesByLocation.has(location.id)),
+    [sortedLocations, facilitiesByLocation],
+  );
+
+  const facilityTypeById = useMemo(() => {
+    const map = new Map<number, FacilityType>();
+    facilityTypesData.forEach(type => map.set(type.id, type));
+    return map;
+  }, [facilityTypesData]);
+
+  const { currentPage, pageSize, totalFacilities } = pagination;
+  const totalPages = totalFacilities > 0 ? Math.ceil(totalFacilities / pageSize) : 0;
+  const offset = (currentPage - 1) * pageSize;
+  const startItem = totalFacilities === 0 ? 0 : Math.min(offset + 1, totalFacilities);
+  const endItem = totalFacilities === 0 ? 0 : Math.min(offset + filteredFacilities.length, totalFacilities);
+  const summaryVisible = totalFacilities > 0 && filteredFacilities.length > 0;
+
+  const pageItems = useMemo<PageDisplayItem[]>(() => {
+    if (totalPages <= 1) {
+      return [];
+    }
+
+    const pages = new Set<number>([1, totalPages, currentPage, currentPage - 1, currentPage + 1]);
+
+    if (currentPage <= 3) {
+      pages.add(2);
+      pages.add(3);
+    }
+
+    if (currentPage >= totalPages - 2) {
+      pages.add(totalPages - 1);
+      pages.add(totalPages - 2);
+    }
+
+    const ordered = Array.from(pages)
+      .filter(page => page >= 1 && page <= totalPages)
+      .sort((a, b) => a - b);
+
+    const items: PageDisplayItem[] = [];
+    let previous: number | null = null;
+
+    for (const page of ordered) {
+      if (previous !== null && page - previous > 1) {
+        items.push({ kind: 'ellipsis', id: `${previous}-${page}` });
+      }
+
+      items.push({ kind: 'page', value: page });
+      previous = page;
+    }
+
+    return items;
+  }, [currentPage, totalPages]);
+
+  const previousLabel = t('pagination_previous');
+  const nextLabel = t('pagination_next');
+  const mobileSummary = totalPages > 0 ? t('results_mobile_summary', { current: currentPage, total: totalPages }) : null;
+  const summaryText = summaryVisible ? t('results_summary', { start: startItem, end: endItem, total: totalFacilities }) : null;
+  const emptyStateText = t('results_empty');
+
+  const isPreviousDisabled = isPending || currentPage <= 1;
+  const isNextDisabled = isPending || totalPages === 0 || currentPage >= totalPages;
+
+  const categoryLabel = activeCategory
+    ? categoryT(activeCategory === 'diaper' ? 'diaper_changing_station' : 'lactation_room')
+    : null;
+
+  const facilityCards: ReactNode[] = [];
+
+  for (const location of visibleLocations) {
+    const locationFacilities = facilitiesByLocation.get(location.id) ?? [];
+
+    for (const facility of locationFacilities) {
+      const facilityType = facilityTypeById.get(facility.facility_type_id);
+
+      if (!facilityType) {
+        continue;
+      }
+
+      facilityCards.push(
+        <FacilityCard
+          key={facility.id}
+          location={location}
+          facility={facility}
+          facilityType={facilityType}
+          userLatitude={userLocation?.latitude ?? 0}
+          userLongitude={userLocation?.longitude ?? 0}
+        />,
+      );
+    }
+  }
 
   return (
-    <div className="py-5 text-xl">
+    <div className="py-5 text-xl" aria-busy={isPending} aria-live="polite">
       <div className="mb-6">
         <div className="flex items-center justify-left gap-3">
           <h1 className="text-3xl font-bold">{t('meta_title')}</h1>
@@ -85,41 +280,103 @@ export default function HomePage({
       </div>
 
       <SearchBar
-        onSearchAction={handleSearch} // Pass handleSearch to SearchBar
+        onSearchAction={handleSearch}
         onUseCurrentLocationAction={() =>
           handleUseCurrentLocation(
-            (latitude, longitude) => handleSearch({ latitude, longitude } as Address), // Pass Address object
+            (latitude, longitude) => handleSearch({ latitude, longitude } as Address),
             () => toast.warning('Unable to retrieve your location. Please try again.'),
           )}
       />
-      <CategoryScroller onCategorySelect={setSelectedCategory} />
 
-      {sortedLocations.map((location) => {
-        const locationFacilities = filteredFacilities.filter(
-          facility => facility.location_id === location.id,
-        );
+      <div className="mt-6">
+        <CategoryScroller selectedCategory={activeCategory} onCategorySelect={handleCategorySelect} />
+        {categoryLabel && (
+          <p className="mt-3 text-base text-muted-foreground">
+            {categoryLabel}
+          </p>
+        )}
+      </div>
 
-        return locationFacilities.map((facility) => {
-          const facilityType = facilityTypesData.find(
-            type => type.id === facility.facility_type_id,
-          );
+      {summaryText && (
+        <div className="mt-6 text-base text-muted-foreground">
+          {summaryText}
+        </div>
+      )}
 
-          if (!facilityType) {
-            return null;
-          }
+      <div className="mt-6">
+        {facilityCards.length > 0 && facilityCards}
+        {facilityCards.length === 0 && (
+          <p className="rounded-lg border border-dashed border-muted-foreground/30 bg-muted/20 p-6 text-base text-muted-foreground">
+            {emptyStateText}
+          </p>
+        )}
+      </div>
 
-          return (
-            <FacilityCard
-              key={facility.id}
-              location={location}
-              facility={facility}
-              facilityType={facilityType}
-              userLatitude={userLocation?.latitude ?? 0}
-              userLongitude={userLocation?.longitude ?? 0}
-            />
-          );
-        });
-      })}
+      {totalPages > 1 && (
+        <div className="mt-10 flex flex-col gap-4">
+          {mobileSummary && (
+            <div className="flex items-center justify-between rounded-md bg-muted/30 px-4 py-3 text-sm text-muted-foreground md:hidden">
+              <button
+                type="button"
+                onClick={() => handlePageChange(currentPage - 1)}
+                className="flex h-10 w-10 items-center justify-center rounded-md border border-muted-foreground/30 disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={isPreviousDisabled}
+                aria-label={previousLabel}
+              >
+                <ChevronLeft className="h-5 w-5" aria-hidden />
+              </button>
+              <span className="text-center text-sm font-medium">{mobileSummary}</span>
+              <button
+                type="button"
+                onClick={() => handlePageChange(currentPage + 1)}
+                className="flex h-10 w-10 items-center justify-center rounded-md border border-muted-foreground/30 disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={isNextDisabled}
+                aria-label={nextLabel}
+              >
+                <ChevronRight className="h-5 w-5" aria-hidden />
+              </button>
+            </div>
+          )}
+
+          <Pagination className="hidden md:flex">
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious disabled={isPreviousDisabled} onClick={() => handlePageChange(currentPage - 1)}>
+                  {previousLabel}
+                </PaginationPrevious>
+              </PaginationItem>
+
+              {pageItems.map((item) => {
+                if (item.kind === 'ellipsis') {
+                  return (
+                    <PaginationItem key={`ellipsis-${item.id}`}>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  );
+                }
+
+                return (
+                  <PaginationItem key={`page-${item.value}`}>
+                    <PaginationLink
+                      isActive={item.value === currentPage}
+                      onClick={() => handlePageChange(item.value)}
+                      disabled={isPending}
+                    >
+                      {item.value}
+                    </PaginationLink>
+                  </PaginationItem>
+                );
+              })}
+
+              <PaginationItem>
+                <PaginationNext disabled={isNextDisabled} onClick={() => handlePageChange(currentPage + 1)}>
+                  {nextLabel}
+                </PaginationNext>
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
     </div>
   );
 }
