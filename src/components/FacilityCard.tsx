@@ -66,7 +66,9 @@ const FacilityCard: React.FC<FacilityCardProps> = ({ location, facility, facilit
             </h2>
             {facility.floor && <Badge>{facility.floor}</Badge>}
           </div>
-
+          <div className="text-black italic line-clamp-2">
+            {facility.description || ''}
+          </div>
           <div className="text-gray-600 flex items-center mt-2">
             <MapPin className="w-4 h-4 mr-1" />
             {distance}
