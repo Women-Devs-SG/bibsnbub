@@ -1,4 +1,4 @@
-import { boolean, integer, numeric, pgTable, primaryKey, serial, text, timestamp, varchar } from 'drizzle-orm/pg-core';
+import { boolean, integer, numeric, pgTable, primaryKey, serial, text, time, timestamp, varchar } from 'drizzle-orm/pg-core';
 
 // --- Location Table ---
 export const locations = pgTable('locations', {
@@ -10,6 +10,8 @@ export const locations = pgTable('locations', {
   postalCode: varchar('postal_code', { length: 10 }),
   latitude: numeric('latitude', { precision: 10, scale: 8 }).notNull(),
   longitude: numeric('longitude', { precision: 11, scale: 8 }).notNull(),
+  opensAt: time('opens_at', { precision: 0, withTimezone: false }),
+  closesAt: time('closes_at', { precision: 0, withTimezone: false }),
 });
 
 // --- Facility Types ---
