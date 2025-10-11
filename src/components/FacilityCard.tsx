@@ -2,6 +2,7 @@
 
 import type { Facility, FacilityType, Location } from '@/models/types';
 
+import OpenStatus from '@/components/OpenStatus';
 import { Badge } from '@/components/ui/badge';
 import { calculateDistance, formatTimeRange } from '@/lib/utils';
 import { bottleBaby } from '@lucide/lab';
@@ -69,6 +70,9 @@ const FacilityCard: React.FC<FacilityCardProps> = ({ location, facility, facilit
               }
             </h2>
             {facility.floor && <Badge>{facility.floor}</Badge>}
+            {location.opensAt && location.closesAt && (
+              <OpenStatus opensAt={location.opensAt} closesAt={location.closesAt} />
+            )}
           </div>
           <div className="text-black italic line-clamp-2">
             {facility.description || ''}
