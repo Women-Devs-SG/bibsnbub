@@ -1,6 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { formatTimeRange } from '@/lib/utils';
 import React from 'react';
 
 type ConfirmationStepProps = {
@@ -28,6 +29,7 @@ const ConfirmationStep: React.FC<ConfirmationStepProps> = ({ formData, onSubmit,
     postalCode,
     floor,
     description,
+    openingHours,
     howToAccess,
     femalesOnly,
     amenities,
@@ -56,6 +58,7 @@ const ConfirmationStep: React.FC<ConfirmationStepProps> = ({ formData, onSubmit,
           <h3 className="font-semibold mb-2">Location</h3>
           <Row label="Address" value={addressLine} />
           <Row label="Postal Code" value={postalCode} />
+          <Row label="Opening Hours" value={formatTimeRange(openingHours)} />
         </Card>
 
         {/* Facility */}
