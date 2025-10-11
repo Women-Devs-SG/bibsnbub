@@ -1,3 +1,4 @@
+import type { TimeRange } from '@/types/TimeRange';
 import type { ClassValue } from 'clsx';
 
 import { clsx } from 'clsx';
@@ -129,4 +130,11 @@ export function formatTime(t: string) {
   const h12 = h24 % 12 || 12;
   const mer = h24 < 12 ? 'A' : 'P';
   return `${h12}${mm === '00' ? '' : `:${mm}`} ${mer}M`;
+}
+
+export function formatTimeRange([t0, t1]: TimeRange) {
+  if (t0 && t1) {
+    return `${formatTime(t0)} - ${formatTime(t1)}`;
+  }
+  return '-';
 }
