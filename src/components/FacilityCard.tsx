@@ -3,8 +3,9 @@
 import type { Facility, FacilityType, Location } from '@/models/types';
 
 import OpenStatus from '@/components/OpenStatus';
+import OperatingHours from '@/components/OperatingHours';
 import { Badge } from '@/components/ui/badge';
-import { calculateDistance, formatTimeRange } from '@/lib/utils';
+import { calculateDistance } from '@/lib/utils';
 import { bottleBaby } from '@lucide/lab';
 import AccessibleIcon from '@mui/icons-material/Accessible';
 import BabyChangingStationIcon from '@mui/icons-material/BabyChangingStation';
@@ -12,7 +13,7 @@ import FamilyRestroomIcon from '@mui/icons-material/FamilyRestroom';
 import ManIcon from '@mui/icons-material/Man';
 import WcIcon from '@mui/icons-material/Wc';
 import WomanIcon from '@mui/icons-material/Woman';
-import { Baby, CircleHelp, Icon, MapPin, Timer } from 'lucide-react';
+import { Baby, CircleHelp, Icon, MapPin } from 'lucide-react';
 import Link from 'next/link';
 import React from 'react';
 
@@ -85,10 +86,7 @@ const FacilityCard: React.FC<FacilityCardProps> = ({ location, facility, facilit
             </p>
 
             {location.opensAt && location.closesAt && (
-              <p className="flex items-center">
-                <Timer className="size-4 mr-1" />
-                {formatTimeRange([location.opensAt, location.closesAt])}
-              </p>
+              <OperatingHours opensAt={location.opensAt} closesAt={location.closesAt} />
             )}
           </div>
         </div>
