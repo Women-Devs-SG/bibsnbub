@@ -5,6 +5,7 @@ import type { FacilityImageMeta } from '@/utils/images';
 
 import AmenitiesList from '@/components/AmenitiesList';
 import BackButton from '@/components/BackButton';
+import OpenStatus from '@/components/OpenStatus';
 import { Badge } from '@/components/ui/badge';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { formatTimeRange } from '@/lib/utils';
@@ -116,6 +117,9 @@ const FacilityPage: React.FC<FacilityDetailsProps> = ({ facility }) => {
           }
         </h1>
         {facility.floor && <Badge className="mt-1 text-1xl">{facility.floor}</Badge>}
+        {location.opensAt && location.closesAt && (
+          <OpenStatus opensAt={location.opensAt} closesAt={location.closesAt} className="mt-1 text-1xl" />
+        )}
       </div>
       {location.opensAt && location.closesAt && (
         <p className="flex items-center mt-2">
