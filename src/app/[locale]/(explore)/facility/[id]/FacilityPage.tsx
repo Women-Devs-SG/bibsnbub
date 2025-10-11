@@ -2,11 +2,14 @@
 
 import type { Amenity, Facility, FacilityType, Location } from '@/models/types';
 import type { FacilityImageMeta } from '@/utils/images';
+
 import AmenitiesList from '@/components/AmenitiesList';
 import BackButton from '@/components/BackButton';
 import { Badge } from '@/components/ui/badge';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import { formatTimeRange } from '@/lib/utils';
 import { getFacilityImages } from '@/utils/images';
+import { Timer } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
@@ -45,6 +48,8 @@ const FacilityPage: React.FC<FacilityDetailsProps> = ({ facility }) => {
     address: t('FacilityPage.unknown_address'),
     latitude: 0,
     longitude: 0,
+    opensAt: null,
+    closesAt: null,
   };
 
   const facilityType = facility.facility_type || {
@@ -112,6 +117,12 @@ const FacilityPage: React.FC<FacilityDetailsProps> = ({ facility }) => {
         </h1>
         {facility.floor && <Badge className="mt-1 text-1xl">{facility.floor}</Badge>}
       </div>
+      {location.opensAt && location.closesAt && (
+        <p className="flex items-center mt-2">
+          <Timer className="size-4 mr-1" />
+          {formatTimeRange([location.opensAt, location.closesAt])}
+        </p>
+      )}
       <p className="text-gray-600 mt-2">{facility.description}</p>
 
       {/* Facility Type */}
