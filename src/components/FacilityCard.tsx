@@ -1,8 +1,9 @@
 'use client';
 
 import type { Facility, FacilityType, Location } from '@/models/types';
+
 import { Badge } from '@/components/ui/badge';
-import { calculateDistance } from '@/lib/utils';
+import { calculateDistance, formatTimeRange } from '@/lib/utils';
 import { bottleBaby } from '@lucide/lab';
 import AccessibleIcon from '@mui/icons-material/Accessible';
 import BabyChangingStationIcon from '@mui/icons-material/BabyChangingStation';
@@ -10,7 +11,7 @@ import FamilyRestroomIcon from '@mui/icons-material/FamilyRestroom';
 import ManIcon from '@mui/icons-material/Man';
 import WcIcon from '@mui/icons-material/Wc';
 import WomanIcon from '@mui/icons-material/Woman';
-import { Baby, CircleHelp, Icon, MapPin } from 'lucide-react';
+import { Baby, CircleHelp, Icon, MapPin, Timer } from 'lucide-react';
 import Link from 'next/link';
 import React from 'react';
 
@@ -56,7 +57,7 @@ const FacilityCard: React.FC<FacilityCardProps> = ({ location, facility, facilit
           {getFacilityIcon(facilityType.name)}
         </div>
 
-        <div className="flex-1">
+        <div className="flex-1 space-y-2">
           <div className="flex items-center gap-2">
             <h2>
               {
@@ -72,11 +73,19 @@ const FacilityCard: React.FC<FacilityCardProps> = ({ location, facility, facilit
           <div className="text-black italic line-clamp-2">
             {facility.description || ''}
           </div>
-          <div className="text-gray-600 flex items-center mt-2">
-            <MapPin className="w-4 h-4 mr-1" />
-            {distance}
-            {' '}
-            km
+
+          <div className="flex items-center gap-2 text-gray-600 text-sm">
+            <p className="flex items-center">
+              <MapPin className="size-4 mr-1" />
+              {`${distance} km`}
+            </p>
+
+            {location.opensAt && location.closesAt && (
+              <p className="flex items-center">
+                <Timer className="size-4 mr-1" />
+                {formatTimeRange([location.opensAt, location.closesAt])}
+              </p>
+            )}
           </div>
         </div>
       </div>
