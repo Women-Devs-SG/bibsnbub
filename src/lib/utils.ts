@@ -138,3 +138,12 @@ export function formatTimeRange([t0, t1]: TimeRange) {
   }
   return '-';
 }
+
+export function nowInTimeRange([t0, t1]: TimeRange) {
+  const now = new Date();
+  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+  const startTime = new Date(Number(startOfDay) + parseTimeToSeconds(t0)! * 1000);
+  const endTime = new Date(Number(startOfDay) + parseTimeToSeconds(t1)! * 1000);
+
+  return now >= startTime && now <= endTime;
+}
