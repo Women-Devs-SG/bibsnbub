@@ -8,6 +8,7 @@ import AccessibleIcon from '@mui/icons-material/Accessible';
 import BabyChangingStationIcon from '@mui/icons-material/BabyChangingStation';
 import FamilyRestroomIcon from '@mui/icons-material/FamilyRestroom';
 import ManIcon from '@mui/icons-material/Man';
+import WcIcon from '@mui/icons-material/Wc';
 import WomanIcon from '@mui/icons-material/Woman';
 import { Baby, CircleHelp, Icon, MapPin } from 'lucide-react';
 import Link from 'next/link';
@@ -30,14 +31,16 @@ const FacilityCard: React.FC<FacilityCardProps> = ({ location, facility, facilit
         return <BabyChangingStationIcon />;
       case 'Baby Room':
         return <Baby />;
-      case 'Accessible Restroom':
+      case 'Restroom (Accessible)':
         return <AccessibleIcon />;
-      case 'Family Restroom':
+      case 'Restroom (Family)':
         return <FamilyRestroomIcon />;
-      case 'Ladies\' Restroom':
+      case 'Restroom (Ladies)':
         return <WomanIcon />;
-      case 'Men\'s Restroom':
+      case 'Restroom (Men\'s)':
         return <ManIcon />;
+      case 'Restroom (Unisex)':
+        return <WcIcon />;
       default:
         return <CircleHelp />;
     }
