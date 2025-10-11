@@ -49,6 +49,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             postal_code: formData.postalCode,
             latitude: formData.latitude,
             longitude: formData.longitude,
+            opens_at: formData.openingHours[0],
+            closes_at: formData.openingHours[1],
           })
           .select('id')
           .single();
@@ -122,6 +124,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         postalCode: formData.postalCode || null,
         latitude: formData.latitude,
         longitude: formData.longitude,
+        opensAt: formData.openingHours[0],
+        closesAt: formData.openingHours[1],
       }).returning({ id: locationsTable.id });
       locationId = inserted[0]?.id as number | undefined;
     }
