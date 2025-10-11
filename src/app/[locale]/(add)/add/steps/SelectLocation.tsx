@@ -1,5 +1,8 @@
 import type { Address } from '@/types/Address';
+import type { TimeRange } from '@/types/TimeRange';
+
 import SearchBar from '@/components/SearchBar';
+import TimeRangePicker from '@/components/TimeRangePicker';
 import { handleUseCurrentLocation } from '@/lib/utils';
 import React from 'react';
 import { toast } from 'sonner';
@@ -13,6 +16,7 @@ type SelectLocationProps = {
     postalCode: string;
     latitude: string;
     longitude: string;
+    openingHours: TimeRange;
   };
   setFormData: (data: any) => void;
 };
@@ -41,6 +45,10 @@ const SelectLocation: React.FC<SelectLocationProps> = ({ formData, setFormData }
     longitude: Number.parseFloat(formData.longitude) || 0,
   });
 
+  const handleOpeningHoursChange = (value: TimeRange) => {
+    setFormData((prev: any) => ({ ...prev, openingHours: value }));
+  };
+
   return (
     <div>
       <h2 className="text-xl font-bold mb-4">Select Location</h2>
@@ -61,6 +69,17 @@ const SelectLocation: React.FC<SelectLocationProps> = ({ formData, setFormData }
             () => toast.warning('Unable to retrieve your location. Please try again.'),
           )}
         initialLocation={mapFormDataToAddress()}
+      />
+
+      {/* Opening Hours */}
+      <TimeRangePicker
+        value={formData.openingHours}
+        onChange={handleOpeningHoursChange}
+        minutesStep={30}
+        className="mt-4"
+        startLabel="Opening hours"
+        endLabel="Closing time"
+        endLabelClassName="invisible"
       />
     </div>
   );
