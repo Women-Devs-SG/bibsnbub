@@ -122,7 +122,6 @@
     "@vitejs/plugin-react": "^4.3.4",
     "@vitest/coverage-v8": "^3.0.7",
     "@vitest/expect": "^3.0.7",
-    "checkly": "^4.19.1",
     "commitizen": "^4.3.1",
     "cross-env": "^7.0.3",
     "dotenv-cli": "^8.0.0",

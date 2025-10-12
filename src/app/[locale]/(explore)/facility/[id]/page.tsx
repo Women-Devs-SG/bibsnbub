@@ -1,5 +1,4 @@
 import type { Amenity, FacilityType, Location } from '@/models/types';
-import { db } from '@/libs/DB';
 import { amenities, facilities, facilityAmenities, facilityTypes, locations } from '@/models/Schema';
 import { getStaticClient } from '@/utils/supabase/client';
 import { tryCreateClient } from '@/utils/supabase/server';
@@ -12,6 +11,10 @@ type FacilityPageProps = {
 };
 
 export async function generateStaticParams() {
+  // During build-time static generation, avoid initializing DB or calling SDKs
+  if (!process.env.NEXT_RUNTIME) {
+    return [];
+  }
   const client = getStaticClient();
   if (client) {
     const { data, error } = await client.from('facilities').select('id');
@@ -22,6 +25,7 @@ export async function generateStaticParams() {
     return data.flatMap((f: { id: number }) => ['en'].map(locale => ({ id: String(f.id), locale })));
   }
   // Local dev: use Drizzle (PGlite)
+  const { db } = await import('@/libs/DB');
   const ids = await db.select({ id: facilities.id }).from(facilities);
   return ids.flatMap((f: { id: number }) => ['en'].map(locale => ({ id: String(f.id), locale })));
 }
@@ -85,6 +89,10 @@ export default async function Page(props: FacilityPageProps) {
   }
 
   // Local dev: fetch via Drizzle (PGlite)
+  if (!process.env.NEXT_RUNTIME) {
+    return <div>Facility not found. It may have been removed or is unavailable.</div>;
+  }
+  const { db } = await import('@/libs/DB');
   const facilityId = Number(id);
   const [facilityRow] = await db.select().from(facilities).where(eq(facilities.id, facilityId)).limit(1);
   if (!facilityRow) {

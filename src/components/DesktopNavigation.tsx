@@ -46,7 +46,7 @@ const DesktopNavigation: React.FC<DesktopNavigationProps> = ({
 
           {/* Locale Selector */}
           <NavigationMenuItem className=" list-none">
-            <NavigationMenuTrigger className="flex items-center gap-2">
+            <NavigationMenuTrigger className="flex items-center gap-2" aria-label="Language Switcher">
               <Globe className="h-5 w-5" />
               <span>{currentLocale.toUpperCase()}</span>
             </NavigationMenuTrigger>
