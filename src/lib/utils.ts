@@ -71,52 +71,40 @@ export const handleUseCurrentLocation = async (
 const RE_TIME_24 = /^([01]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/;
 const RE_TIME_12 = /^(0?[1-9]|1[0-2]):([0-5]\d)(?::([0-5]\d))?\s*([AP])\.?M\.?$/i;
 
-export function parseStringToTime(s: string): string | null {
+function parseStringToHHMMSS(s: string): [string, string, string] | null {
   const t = s.trim();
-  const p = (s: any) => String(s).padStart(2, '0');
-  const f = (h: any, m: any, s: any) => `${p(h)}:${p(m)}:${p(s)}`;
 
   // Try 24-hour first
   let m = t.match(RE_TIME_24);
   if (m) {
     const [h24 = '00', mm = '00', ss = '00'] = m.slice(1);
-    return f(h24, mm, ss);
+    return [h24, mm, ss];
   }
 
   // Then 12-hour with AM/PM
-  m = s.match(RE_TIME_12);
+  m = t.match(RE_TIME_12);
   if (m) {
     const [h12 = '12', mm = '00', ss = '00', mer = 'a'] = m.slice(1);
-    const h24 = (Number.parseInt(h12) % 12) + (mer.toUpperCase() === 'A' ? 0 : 12);
-    return f(h24, mm, ss);
+    const h24 = String((Number.parseInt(h12) % 12) + (mer.toUpperCase() === 'A' ? 0 : 12));
+    return [h24, mm, ss];
   }
 
   return null;
+}
+
+export function parseStringToTime(s: string): string | null {
+  const m = parseStringToHHMMSS(s);
+  const p = (s: any) => String(s).padStart(2, '0');
+  return m ? `${p(m[0])}:${p(m[1])}:${p(m[2])}` : null;
 }
 
 export function parseTimeToSeconds(t: string | null): number | null {
   if (!t) {
     return null;
   }
-  const s = t.trim();
-  const f = (h: any, m: any, s: any) => Number.parseInt(h) * 3600 + Number.parseInt(m) * 60 + Number.parseInt(s);
-
-  // Try 24-hour first
-  let m = s.match(RE_TIME_24);
-  if (m) {
-    const [h24 = '00', mm = '00', ss = '00'] = m.slice(1);
-    return f(h24, mm, ss);
-  }
-
-  // Then 12-hour with AM/PM
-  m = s.match(RE_TIME_12);
-  if (m) {
-    const [h12 = '12', mm = '00', ss = '00', mer = 'a'] = m.slice(1);
-    const h24 = (Number.parseInt(h12) % 12) + (mer.toUpperCase() === 'A' ? 0 : 12);
-    return f(h24, mm, ss);
-  }
-
-  return null;
+  const m = parseStringToHHMMSS(t);
+  const p = Number.parseInt;
+  return m ? p(m[0]) * 3600 + p(m[1]) * 60 + p(m[2]) : null;
 }
 
 export function formatTime(t: string) {
