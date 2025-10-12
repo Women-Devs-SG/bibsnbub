@@ -6,11 +6,10 @@ import type { FacilityImageMeta } from '@/utils/images';
 import AmenitiesList from '@/components/AmenitiesList';
 import BackButton from '@/components/BackButton';
 import OpenStatus from '@/components/OpenStatus';
+import OperatingHours from '@/components/OperatingHours';
 import { Badge } from '@/components/ui/badge';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
-import { formatTimeRange } from '@/lib/utils';
 import { getFacilityImages } from '@/utils/images';
-import { Timer } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
@@ -122,10 +121,7 @@ const FacilityPage: React.FC<FacilityDetailsProps> = ({ facility }) => {
         )}
       </div>
       {location.opensAt && location.closesAt && (
-        <p className="flex items-center mt-2">
-          <Timer className="size-4 mr-1" />
-          {formatTimeRange([location.opensAt, location.closesAt])}
-        </p>
+        <OperatingHours exact opensAt={location.opensAt} closesAt={location.closesAt} className="mt-2" />
       )}
       <p className="text-gray-600 mt-2">{facility.description}</p>
 
