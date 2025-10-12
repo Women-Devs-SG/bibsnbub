@@ -21,9 +21,9 @@ const AmenityItem: React.FC<AmenityItemProps> = ({ amenity, quantity }) => {
         return <Snowflake className="w-5 h-5 text-gray-500" />;
       case 'diaper changing station':
         return <BabyChangingStationIcon className="w-5 h-5 text-gray-600" />;
-      case 'diaper dispensers':
+      case 'diaper dispenser':
         return <Icon className="w-5 h-5 text-gray-600" iconNode={diaper} />;
-      case 'bed linen dispensers':
+      case 'bed linen dispenser':
         return <Icon className="w-5 h-5 text-gray-600" iconNode={towelFolded} />;
       case 'wifi':
         return <Wifi className="w-5 h-5 text-gray-600" />;
