@@ -3,6 +3,8 @@
   { "name": "Hot Water Dispenser", "description": "A dispenser for hot water", "isMultipleApplicable": true },
   { "name": "Cold Water Dispenser", "description": "A dispenser for cold water", "isMultipleApplicable": true },
   { "name": "Diaper Changing Station", "description": "A station for changing diapers", "isMultipleApplicable": true },
+  { "name": "Diaper Dispenser", "description": "A dispenser for diapers", "isMultipleApplicable": true },
+  { "name": "Bed Linen Dispenser", "description": "A dispenser for disposable diaper bed liner", "isMultipleApplicable": true },
   { "name": "WiFi", "description": "Wireless internet access", "isMultipleApplicable": false },
   { "name": "Trash Bin", "description": "A bin for disposing trash", "isMultipleApplicable": true },
   { "name": "Electrical Outlet", "description": "An outlet for charging devices", "isMultipleApplicable": true },
