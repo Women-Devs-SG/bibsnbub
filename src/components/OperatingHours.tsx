@@ -1,32 +1,32 @@
-import { formatTime, nowInTimeRange } from '@/lib/utils';
+import { cn, formatTime, formatTimeRange, nowInTimeRange } from '@/lib/utils';
 import { Timer, TimerOff } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 type OperatingHoursProps = {
   opensAt: string;
   closesAt: string;
+  exact?: boolean;
+  className?: string;
 };
 
-export const OperatingHours: React.FC<OperatingHoursProps> = ({ opensAt, closesAt }) => {
+export const OperatingHours: React.FC<OperatingHoursProps> = ({ opensAt, closesAt, exact, className }) => {
   const [isMounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   if (!isMounted || !opensAt || !closesAt) {
     return null;
   }
 
-  if (nowInTimeRange([opensAt, closesAt])) {
-    return (
-      <p className="flex items-center">
-        <Timer className="size-4 mr-1" />
-        {`Open until ${formatTime(closesAt)}`}
-      </p>
-    );
-  }
+  const isOpenNow = nowInTimeRange([opensAt, closesAt]);
+  const Icon = exact || isOpenNow ? Timer : TimerOff;
 
   return (
-    <p className="flex items-center">
-      <TimerOff className="size-4 mr-1" />
-      {`Opens at ${formatTime(opensAt)}`}
+    <p className={cn('flex items-center', className)}>
+      <Icon className="size-4 mr-1" />
+      {exact
+        ? formatTimeRange([opensAt, closesAt])
+        : isOpenNow
+          ? `Open until ${formatTime(closesAt)}`
+          : `Opens at ${formatTime(opensAt)}`}
     </p>
   );
 };
