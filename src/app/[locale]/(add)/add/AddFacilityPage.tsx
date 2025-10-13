@@ -38,7 +38,7 @@ export default function AddFacilityPage({ amenities, facilityTypes }: AddFacilit
     longitude: '',
     floor: '',
     description: '',
-    openingHours: [null, null] as TimeRange,
+    openingHours: ['10:00:00', '22:00:00'] as TimeRange,
     hasDiaperChangingStation: false,
     hasLactationRoom: false,
     howToAccess: '',
