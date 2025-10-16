@@ -6,4 +6,6 @@ export type Address = {
   postalCode: string; // Postal code
   latitude: number; // Latitude
   longitude: number; // Longitude
+  opensAt: string | null; // Opening time in HH:MM format
+  closesAt: string | null; // Closing time in HH:MM format
 };

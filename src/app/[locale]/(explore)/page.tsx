@@ -1,78 +1,137 @@
+import type { FacilityCategorySlug } from '@/lib/facility-categories';
+import type { Facility, FacilityType, Location } from '@/models/types';
+import { FACILITY_CATEGORY_SLUGS, getCategoryFilterKey } from '@/lib/facility-categories';
 import { facilities, facilityTypes, locations } from '@/models/Schema';
 import { tryCreateClient } from '@/utils/supabase/server';
+import { eq, inArray, sql } from 'drizzle-orm';
+import { redirect } from 'next/navigation';
 import HomePage from './HomePage';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-export default async function Page() {
+type PageSearchParams = {
+  page?: string;
+  pageSize?: string;
+  category?: string;
+};
+
+const DEFAULT_PAGE_SIZE = 10;
+const MIN_PAGE_SIZE = 5;
+const MAX_PAGE_SIZE = 25;
+
+const normalizeFacility = (row: any): Facility => ({
+  id: row.id,
+  location_id: row.location_id ?? row.locationId,
+  facility_type_id: row.facility_type_id ?? row.facilityTypeId,
+  floor: row.floor ?? '',
+  how_to_access: row.how_to_access ?? row.howToAccess ?? null,
+  description: row.description ?? null,
+  has_diaper_changing_station: Boolean(row.has_diaper_changing_station ?? row.hasDiaperChangingStation),
+  has_lactation_room: Boolean(row.has_lactation_room ?? row.hasLactationRoom),
+  amenities: row.amenities,
+  created_by: row.created_by ?? row.createdBy ?? '',
+  created_at:
+    typeof row.created_at === 'string'
+      ? row.created_at
+      : row.createdAt?.toISOString?.() ?? String(row.createdAt ?? ''),
+});
+
+const normalizeLocation = (row: any): Location => ({
+  id: row.id,
+  building: row.building ?? undefined,
+  block: row.block ?? undefined,
+  road: row.road ?? undefined,
+  address: row.address,
+  latitude: typeof row.latitude === 'string' ? Number(row.latitude) : Number(row.latitude ?? 0),
+  longitude: typeof row.longitude === 'string' ? Number(row.longitude) : Number(row.longitude ?? 0),
+  opensAt: row.opensAt ?? row.opens_at ?? null,
+  closesAt: row.closesAt ?? row.closes_at ?? null,
+});
+
+const normalizeFacilityType = (row: any): FacilityType => ({
+  id: row.id,
+  name: row.name,
+});
+
+type PageProps = {
+  searchParams?: PageSearchParams | Promise<PageSearchParams>;
+};
+
+export default async function Page(props: PageProps) {
+  const searchParams = (await props.searchParams) ?? {};
+  const rawPage = typeof searchParams.page === 'string' ? Number.parseInt(searchParams.page, 10) : 1;
+  const rawPageSize = typeof searchParams.pageSize === 'string' ? Number.parseInt(searchParams.pageSize, 10) : DEFAULT_PAGE_SIZE;
+  const boundedPageSize = Number.isFinite(rawPageSize)
+    ? Math.min(Math.max(rawPageSize, MIN_PAGE_SIZE), MAX_PAGE_SIZE)
+    : DEFAULT_PAGE_SIZE;
+  const currentPage = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
+  const pageSize = boundedPageSize;
+  const offset = (currentPage - 1) * pageSize;
+
+  const rawCategory = typeof searchParams.category === 'string' ? searchParams.category : null;
+  const categorySlug = (rawCategory && FACILITY_CATEGORY_SLUGS.includes(rawCategory as FacilityCategorySlug)
+    ? rawCategory
+    : null) as FacilityCategorySlug | null;
+  const selectedCategoryFilterKey = getCategoryFilterKey(categorySlug);
+
   const forceLocal = process.env.FORCE_LOCAL_DB === '1';
   const supabase = forceLocal ? null : await tryCreateClient();
 
-  let locationsData: any[] = [];
-  let facilitiesData: any[] = [];
-  let facilityTypesData: any[] = [];
+  let locationsData: Location[] = [];
+  let facilitiesData: Facility[] = [];
+  let facilityTypesData: FacilityType[] = [];
+  let totalFacilities = 0;
 
   if (supabase) {
     try {
-      const [locRes, facRes, typeRes] = await Promise.all([
-        supabase.from('locations').select(),
-        supabase.from('facilities').select(),
-        supabase.from('facility_types').select(),
-      ]);
+      let facilityQuery = supabase
+        .from('facilities')
+        .select('*', { count: 'exact' })
+        .order('id', { ascending: true });
 
-      if (locRes.error || facRes.error || typeRes.error) {
-        throw locRes.error || facRes.error || typeRes.error;
+      if (selectedCategoryFilterKey) {
+        facilityQuery = facilityQuery.eq(selectedCategoryFilterKey, true);
       }
-      locationsData = locRes.data ?? [];
-      facilitiesData = facRes.data ?? [];
-      facilityTypesData = typeRes.data ?? [];
-      // If any dataset is empty, selectively fill from local DB
-      if (!locationsData.length || !facilitiesData.length || !facilityTypesData.length) {
-        if (!process.env.NEXT_RUNTIME) {
-          // During build-time, avoid initializing DB
-          // Leave arrays as-is; the later fallback will handle empty state
-        } else {
-          const { db } = await import('@/libs/DB');
-          const [locs, facs, types] = await Promise.all([
-            !locationsData.length ? db.select().from(locations) : Promise.resolve(null),
-            !facilitiesData.length ? db.select().from(facilities) : Promise.resolve(null),
-            !facilityTypesData.length ? db.select().from(facilityTypes) : Promise.resolve(null),
-          ]);
 
-          if (!locationsData.length && Array.isArray(locs)) {
-            locationsData = locs.map((l: any) => ({
-              id: l.id,
-              building: l.building ?? undefined,
-              block: l.block ?? undefined,
-              road: l.road ?? undefined,
-              address: l.address,
-              latitude: typeof l.latitude === 'string' ? Number(l.latitude) : l.latitude,
-              longitude: typeof l.longitude === 'string' ? Number(l.longitude) : l.longitude,
-              opensAt: l.opensAt ?? undefined,
-              closesAt: l.closesAt ?? undefined,
-            }));
-          }
+      const { data: facilityRows, error: facilityError, count } = await facilityQuery.range(
+        offset,
+        offset + pageSize - 1,
+      );
 
-          if (!facilitiesData.length && Array.isArray(facs)) {
-            facilitiesData = facs.map((f: any) => ({
-              id: f.id,
-              location_id: f.locationId,
-              facility_type_id: f.facilityTypeId,
-              floor: f.floor ?? '',
-              how_to_access: f.howToAccess ?? null,
-              description: f.description ?? null,
-              has_diaper_changing_station: !!f.hasDiaperChangingStation,
-              has_lactation_room: !!f.hasLactationRoom,
-              created_by: f.createdBy,
-              created_at: f.createdAt?.toISOString?.() ?? String(f.createdAt ?? ''),
-            }));
-          }
+      if (facilityError) {
+        throw facilityError;
+      }
 
-          if (!facilityTypesData.length && Array.isArray(types)) {
-            facilityTypesData = types.map((t: any) => ({ id: t.id, name: t.name }));
-          }
+      totalFacilities = count ?? 0;
+      facilitiesData = (facilityRows ?? []).map(normalizeFacility);
+
+      const locationIds = Array.from(new Set(facilitiesData.map(f => f.location_id))).filter(Boolean);
+      if (locationIds.length) {
+        const { data: locData, error: locError } = await supabase
+          .from('locations')
+          .select('*')
+          .in('id', locationIds);
+
+        if (locError) {
+          throw locError;
         }
+
+        locationsData = (locData ?? []).map(normalizeLocation);
+      }
+
+      const facilityTypeIds = Array.from(new Set(facilitiesData.map(f => f.facility_type_id))).filter(Boolean);
+      if (facilityTypeIds.length) {
+        const { data: typeData, error: typeError } = await supabase
+          .from('facility_types')
+          .select('id, name')
+          .in('id', facilityTypeIds);
+
+        if (typeError) {
+          throw typeError;
+        }
+
+        facilityTypesData = (typeData ?? []).map(normalizeFacilityType);
       }
     } catch (e) {
       console.error('Supabase fetch failed, falling back to local DB:', e);
@@ -80,55 +139,77 @@ export default async function Page() {
     }
   }
 
-  if (!locationsData.length && !facilitiesData.length && !facilityTypesData.length) {
-    // Build-time (static generation) has no runtime. Avoid DB initialization.
-    if (!process.env.NEXT_RUNTIME) {
-      return (
-        <HomePage
-          locationsData={[]}
-          facilitiesData={[]}
-          facilityTypesData={[]}
-        />
-      );
+  const shouldUseLocal = !supabase || (!facilitiesData.length && totalFacilities === 0);
+
+  if (shouldUseLocal) {
+    const { db } = await import('@/libs/DB');
+
+    const whereClause = selectedCategoryFilterKey === 'has_diaper_changing_station'
+      ? eq(facilities.hasDiaperChangingStation, true)
+      : selectedCategoryFilterKey === 'has_lactation_room'
+        ? eq(facilities.hasLactationRoom, true)
+        : undefined;
+
+    let totalQuery = db.select({ value: sql<number>`count(*)` }).from(facilities);
+    if (whereClause) {
+      totalQuery = totalQuery.where(whereClause);
+    }
+    const totalResult = await totalQuery;
+    totalFacilities = Number(totalResult[0]?.value ?? 0);
+
+    let facilityQuery = db.select().from(facilities).orderBy(facilities.id).limit(pageSize).offset(offset);
+    if (whereClause) {
+      facilityQuery = facilityQuery.where(whereClause);
+    }
+    const facRows = await facilityQuery;
+    facilitiesData = facRows.map(normalizeFacility);
+
+    const locationIds = Array.from(new Set(facilitiesData.map(f => f.location_id))).filter(Boolean);
+    if (locationIds.length) {
+      const locRows = await db.select().from(locations).where(inArray(locations.id, locationIds));
+      locationsData = locRows.map(normalizeLocation);
     }
 
-    // Local dev: PGlite/Postgres via Drizzle (dynamic import avoids top-level init during build)
-    const { db } = await import('@/libs/DB');
-    // Map camelCase DB rows from Drizzle to snake_case API types expected by HomePage.
-    const [locs, facs, types] = await Promise.all([
-      db.select().from(locations),
-      db.select().from(facilities),
-      db.select().from(facilityTypes),
-    ]);
+    const facilityTypeIds = Array.from(new Set(facilitiesData.map(f => f.facility_type_id))).filter(Boolean);
+    if (facilityTypeIds.length) {
+      const typeRows = await db.select().from(facilityTypes).where(inArray(facilityTypes.id, facilityTypeIds));
+      facilityTypesData = typeRows.map(normalizeFacilityType);
+    }
+  } else {
+    // Supabase provided data but may have omitted related tables; fill missing pieces locally if available.
+    const missingLocationIds = facilitiesData
+      .map(f => f.location_id)
+      .filter(id => !locationsData.some(loc => loc.id === id));
+    const missingFacilityTypeIds = facilitiesData
+      .map(f => f.facility_type_id)
+      .filter(id => !facilityTypesData.some(type => type.id === id));
 
-    locationsData = locs.map((l: any) => ({
-      id: l.id,
-      building: l.building ?? undefined,
-      block: l.block ?? undefined,
-      road: l.road ?? undefined,
-      address: l.address,
-      latitude: typeof l.latitude === 'string' ? Number(l.latitude) : l.latitude,
-      longitude: typeof l.longitude === 'string' ? Number(l.longitude) : l.longitude,
-      opensAt: l.opensAt ?? undefined,
-      closesAt: l.closesAt ?? undefined,
-    }));
+    if (missingLocationIds.length || missingFacilityTypeIds.length) {
+      const { db } = await import('@/libs/DB');
 
-    facilitiesData = facs.map((f: any) => ({
-      id: f.id,
-      location_id: f.locationId,
-      facility_type_id: f.facilityTypeId,
-      floor: f.floor ?? '',
-      how_to_access: f.howToAccess ?? null,
-      description: f.description ?? null,
-      has_diaper_changing_station: !!f.hasDiaperChangingStation,
-      has_lactation_room: !!f.hasLactationRoom,
-      created_by: f.createdBy,
-      created_at: f.createdAt?.toISOString?.() ?? String(f.createdAt ?? ''),
-    }));
+      if (missingLocationIds.length) {
+        const locRows = await db.select().from(locations).where(inArray(locations.id, missingLocationIds));
+        locationsData = locationsData.concat(locRows.map(normalizeLocation));
+      }
 
-    facilityTypesData = types.map((t: any) => ({ id: t.id, name: t.name }));
+      if (missingFacilityTypeIds.length) {
+        const typeRows = await db.select().from(facilityTypes).where(inArray(facilityTypes.id, missingFacilityTypeIds));
+        facilityTypesData = facilityTypesData.concat(typeRows.map(normalizeFacilityType));
+      }
+    }
+  }
 
-    // No-op
+  const totalPages = totalFacilities > 0 ? Math.ceil(totalFacilities / pageSize) : 0;
+  if (totalFacilities > 0 && currentPage > totalPages) {
+    const params = new URLSearchParams();
+    params.set('page', String(totalPages));
+    if (pageSize !== DEFAULT_PAGE_SIZE) {
+      params.set('pageSize', String(pageSize));
+    }
+    if (categorySlug) {
+      params.set('category', categorySlug);
+    }
+    redirect(`?${params.toString()}`);
   }
 
   return (
@@ -136,6 +217,12 @@ export default async function Page() {
       locationsData={locationsData || []}
       facilitiesData={facilitiesData || []}
       facilityTypesData={facilityTypesData || []}
+      pagination={{
+        currentPage,
+        pageSize,
+        totalFacilities,
+      }}
+      selectedCategory={categorySlug}
     />
   );
 }
