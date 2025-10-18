@@ -6,6 +6,7 @@ import OpenStatus from '@/components/OpenStatus';
 import OperatingHours from '@/components/OperatingHours';
 import { Badge } from '@/components/ui/badge';
 import { calculateDistance } from '@/lib/utils';
+import { skipTrimToSentenceCase } from '@/utils/text';
 import { bottleBaby } from '@lucide/lab';
 import AccessibleIcon from '@mui/icons-material/Accessible';
 import BabyChangingStationIcon from '@mui/icons-material/BabyChangingStation';
@@ -63,11 +64,11 @@ const FacilityCard: React.FC<FacilityCardProps> = ({ location, facility, facilit
           <div className="flex items-center gap-2">
             <h2>
               {
-                location.building
+                skipTrimToSentenceCase(location.building
                   ? location.building
                   : location.block
                     ? `${location.block} ${location.road}`
-                    : location.address
+                    : location.address)
               }
             </h2>
             {facility.floor && <Badge>{facility.floor}</Badge>}
