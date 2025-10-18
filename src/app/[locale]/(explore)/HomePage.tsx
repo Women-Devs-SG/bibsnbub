@@ -65,14 +65,20 @@ export default function HomePage({
           <h1 className="text-3xl font-bold">{t('meta_title')}</h1>
           <div className="flex items-center gap-2 text-base font-medium text-gray-600">
             <span className="sm:inline">{t('meta_by')}</span>
-            <Image
-              src="/assets/images/womendevs.png"
-              alt="Women Devs SG"
-              width={100}
-              height={24}
-              className="h-12 w-auto"
-              priority
-            />
+            <a
+              href="https://womendevssg.netlify.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Image
+                src="/assets/images/womendevs.png"
+                alt="Women Devs SG"
+                width={100}
+                height={24}
+                className="h-12 w-auto cursor-pointer hover:opacity-80 transition-opacity"
+                priority
+              />
+            </a>
           </div>
         </div>
         <p className="mt-1">{t('meta_description')}</p>
