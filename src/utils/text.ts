@@ -19,7 +19,5 @@ export const skipTrimToSentenceCase = (str: string): string => {
   if (firstCharIndex === -1) {
     return str;
   }
-  return str.slice(0, firstCharIndex)
-    + str.charAt(firstCharIndex).toUpperCase()
-    + str.slice(firstCharIndex + 1).toLowerCase();
+  return str.slice(0, firstCharIndex) + toSentenceCase(str.slice(firstCharIndex));
 };
