@@ -35,4 +35,6 @@ export type Address = {
   address: string;
   latitude: number;
   longitude: number;
+  opensAt: string | null;
+  closesAt: string | null;
 };

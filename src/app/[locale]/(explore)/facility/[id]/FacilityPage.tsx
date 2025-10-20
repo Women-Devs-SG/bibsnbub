@@ -2,8 +2,11 @@
 
 import type { Amenity, Facility, FacilityType, Location } from '@/models/types';
 import type { FacilityImageMeta } from '@/utils/images';
+
 import AmenitiesList from '@/components/AmenitiesList';
 import BackButton from '@/components/BackButton';
+import OpenStatus from '@/components/OpenStatus';
+import OperatingHours from '@/components/OperatingHours';
 import { Badge } from '@/components/ui/badge';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { getFacilityImages } from '@/utils/images';
@@ -45,6 +48,8 @@ const FacilityPage: React.FC<FacilityDetailsProps> = ({ facility }) => {
     address: t('FacilityPage.unknown_address'),
     latitude: 0,
     longitude: 0,
+    opensAt: null,
+    closesAt: null,
   };
 
   const facilityType = facility.facility_type || {
@@ -111,7 +116,13 @@ const FacilityPage: React.FC<FacilityDetailsProps> = ({ facility }) => {
           }
         </h1>
         {facility.floor && <Badge className="mt-1 text-1xl">{facility.floor}</Badge>}
+        {location.opensAt && location.closesAt && (
+          <OpenStatus opensAt={location.opensAt} closesAt={location.closesAt} className="mt-1 text-1xl" />
+        )}
       </div>
+      {location.opensAt && location.closesAt && (
+        <OperatingHours exact opensAt={location.opensAt} closesAt={location.closesAt} className="mt-2" />
+      )}
       <p className="text-gray-600 mt-2">{facility.description}</p>
 
       {/* Facility Type */}

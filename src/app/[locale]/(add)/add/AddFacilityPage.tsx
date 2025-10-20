@@ -1,6 +1,8 @@
 'use client';
 
+import type { TimeRange } from '@/types/TimeRange';
 import type { LocalUpload } from './steps/UploadFacilityImages';
+
 import NavigationButtons from '@/components/NavigationButtons';
 import ProgressBar from '@/components/ProgressBar';
 import { uploadFacilityImages } from '@/utils/images';
@@ -36,6 +38,7 @@ export default function AddFacilityPage({ amenities, facilityTypes }: AddFacilit
     longitude: '',
     floor: '',
     description: '',
+    openingHours: ['10:00:00', '22:00:00'] as TimeRange,
     hasDiaperChangingStation: false,
     hasLactationRoom: false,
     howToAccess: '',

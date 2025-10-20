@@ -49,6 +49,8 @@ export default async function Page() {
               address: l.address,
               latitude: typeof l.latitude === 'string' ? Number(l.latitude) : l.latitude,
               longitude: typeof l.longitude === 'string' ? Number(l.longitude) : l.longitude,
+              opensAt: l.opensAt ?? undefined,
+              closesAt: l.closesAt ?? undefined,
             }));
           }
 
@@ -107,6 +109,8 @@ export default async function Page() {
       address: l.address,
       latitude: typeof l.latitude === 'string' ? Number(l.latitude) : l.latitude,
       longitude: typeof l.longitude === 'string' ? Number(l.longitude) : l.longitude,
+      opensAt: l.opensAt ?? undefined,
+      closesAt: l.closesAt ?? undefined,
     }));
 
     facilitiesData = facs.map((f: any) => ({

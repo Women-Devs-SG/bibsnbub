@@ -6,7 +6,9 @@
     "address": "2 Orchard Turn, Singapore 238801",
     "postalCode": "238801",
     "latitude": 1.3040,
-    "longitude": 103.8318
+    "longitude": 103.8318,
+    "opensAt": "09:00:00",
+    "closesAt": "19:00:00"
   },
   {
     "building": "Mandarin Gallery",
