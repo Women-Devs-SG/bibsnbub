@@ -1,16 +1,13 @@
 /**
- * Converts a string to sentence case.
- * @param str the input string
- * @returns the string in sentence case
+ * Convert a string to sentence case:
+ * - trims whitespace
+ * - uppercases the first alphabetic character and lowercases following letters
+ * - preserves leading non-letter characters; returns trimmed string if no letters
+ *
+ * Note: internal acronyms/mixed-case words will be lowercased (e.g. "NASA" -> "Nasa").
  */
-export const toSentenceCase = (str: string): string => {
-  if (!str) {
-    return str;
-  }
-  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-};
 
-export const skipTrimToSentenceCase = (str: string): string => {
+export const transformToSentenceCase = (str: string): string => {
   if (!str) {
     return str;
   }
@@ -19,5 +16,5 @@ export const skipTrimToSentenceCase = (str: string): string => {
   if (firstCharIndex === -1) {
     return str;
   }
-  return str.slice(0, firstCharIndex) + toSentenceCase(str.slice(firstCharIndex));
+  return str.slice(0, firstCharIndex) + str.charAt(firstCharIndex).toUpperCase() + str.slice(firstCharIndex + 1).toLowerCase();
 };

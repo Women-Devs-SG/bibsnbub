@@ -1,21 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { skipTrimToSentenceCase, toSentenceCase } from './text';
+import { transformToSentenceCase } from './text';
 
 describe('Text transformation utilities', () => {
-  describe('toSentenceCase', () => {
-    const cases = [
-      { input: 'ION ORCHARD MALL', expected: 'Ion orchard mall' },
-      { input: 'FAR EAST PLAZA', expected: 'Far east plaza' },
-      { input: 'MANDARIN GALLERY', expected: 'Mandarin gallery' },
-    ];
-
-    it('correctly transforms strings to sentence case', () => {
-      cases.forEach(({ input, expected }) => {
-        expect(toSentenceCase(input)).toBe(expected);
-      });
-    });
-  });
-
   describe('skipTrimToSentenceCase', () => {
     const normalCases = [
       { input: 'ION ORCHARD MALL', expected: 'Ion orchard mall' },
@@ -36,13 +22,13 @@ describe('Text transformation utilities', () => {
 
     it('correctly transforms normal cases to sentence case', () => {
       normalCases.forEach(({ input, expected }) => {
-        expect(skipTrimToSentenceCase(input)).toBe(expected);
+        expect(transformToSentenceCase(input)).toBe(expected);
       });
     });
 
     it('correctly handles edge cases', () => {
       edgeCases.forEach(({ input, expected }) => {
-        expect(skipTrimToSentenceCase(input)).toBe(expected);
+        expect(transformToSentenceCase(input)).toBe(expected);
       });
     });
   });
