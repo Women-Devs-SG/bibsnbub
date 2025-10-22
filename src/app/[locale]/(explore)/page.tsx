@@ -55,7 +55,7 @@ const normalizeFacilityType = (row: any): FacilityType => ({
 });
 
 type PageProps = {
-  searchParams?: PageSearchParams | Promise<PageSearchParams>;
+  searchParams?: Promise<PageSearchParams>;
 };
 
 export default async function Page(props: PageProps) {
