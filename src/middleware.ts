@@ -9,6 +9,7 @@ const intlMiddleware = createMiddleware(routing);
 const isProtectedRoute = createRouteMatcher([
   '/dashboard(.*)',
   '/:locale/dashboard(.*)',
+  '/add',
 ]);
 
 const isAuthPage = createRouteMatcher([
