@@ -2,7 +2,12 @@
   "Index": {
     "meta_title": "Bibs & Bub",
     "meta_by": "by",
-    "meta_description": "For the bits and bobs of parenthood."
+    "meta_description": "For the bits and bobs of parenthood.",
+    "results_summary": "Showing {start}–{end} of {total} facilities.",
+    "results_mobile_summary": "Page {current} of {total}",
+    "results_empty": "No facilities match your filters yet.",
+    "pagination_previous": "Previous",
+    "pagination_next": "Next"
   },
   "CategoryScroller": {
     "all": "All",
