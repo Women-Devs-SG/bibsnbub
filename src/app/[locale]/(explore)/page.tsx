@@ -177,6 +177,11 @@ export default async function Page(props: PageProps) {
     }
   } else {
     // Supabase provided data but may have omitted related tables; fill missing pieces locally if available.
+    // In some cases (e.g., restricted permissions or incomplete query responses), Supabase may return
+    // facility rows without the corresponding location or facility_type data. This fallback ensures
+    // we populate any gaps using the local database.
+    // TODO: Remove this fallback once the API contract guarantees that all related tables are included
+    // in Supabase responses, or once RLS policies are finalized to always allow access to related data.
     const missingLocationIds = facilitiesData
       .map(f => f.location_id)
       .filter(id => !locationsData.some(loc => loc.id === id));

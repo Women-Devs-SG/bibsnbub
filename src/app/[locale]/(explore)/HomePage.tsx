@@ -52,7 +52,6 @@ export default function HomePage({
   selectedCategory,
 }: Props) {
   const t = useTranslations('Index');
-  const categoryT = useTranslations('CategoryScroller');
   const router = useRouter();
   const pathname = usePathname() ?? '/';
   const searchParams = useSearchParams();
@@ -224,10 +223,6 @@ export default function HomePage({
   const isPreviousDisabled = isPending || currentPage <= 1;
   const isNextDisabled = isPending || totalPages === 0 || currentPage >= totalPages;
 
-  const categoryLabel = activeCategory
-    ? categoryT(activeCategory === 'diaper' ? 'diaper_changing_station' : 'lactation_room')
-    : null;
-
   const facilityCards: ReactNode[] = [];
 
   for (const location of visibleLocations) {
@@ -290,11 +285,6 @@ export default function HomePage({
 
       <div className="mt-6">
         <CategoryScroller selectedCategory={activeCategory} onCategorySelect={handleCategorySelect} />
-        {categoryLabel && (
-          <p className="mt-3 text-base text-muted-foreground">
-            {categoryLabel}
-          </p>
-        )}
       </div>
 
       {summaryText && (
