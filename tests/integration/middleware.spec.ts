@@ -11,7 +11,7 @@ test.describe('Middleware routing', () => {
         },
       });
 
-      // 3. ASSERTION 2: Check the redirection target
+      // 2. ASSERTION: Check the redirection target
       const locationHeader = response.headers.get('link');
 
       expect(locationHeader).toContain('/sign-in');
