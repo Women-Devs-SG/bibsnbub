@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { transformToSentenceCase } from './text';
+import { capitalizeFirstAlphabeticChar, transformToSentenceCase } from './text';
 
 describe('Text transformation utilities', () => {
   describe('when text is not sentence case', () => {
@@ -55,6 +55,57 @@ describe('Text transformation utilities', () => {
         it('should trim the leading and trailing spaces', () => {
           expect(transformToSentenceCase('   LEADING AND TRAILING SPACES   ')).toBe('Leading and trailing spaces');
         });
+      });
+    });
+  });
+
+  describe('when capitalizing each word', () => {
+    describe('when input contains multiple words', () => {
+      it('should capitalize the first alphabetic character of each word', () => {
+        expect(capitalizeFirstAlphabeticChar('hello world')).toBe('Hello World');
+        expect(capitalizeFirstAlphabeticChar('ion orchard mall')).toBe('Ion Orchard Mall');
+      });
+
+      it('should capitalize the first alphabetic character of each word and lowercase the rest', () => {
+        expect(capitalizeFirstAlphabeticChar('hello WORLD')).toBe('Hello World');
+        expect(capitalizeFirstAlphabeticChar('mIXed CaSe')).toBe('Mixed Case');
+      });
+    });
+
+    describe('when input is empty or single character', () => {
+      it('should return empty string for empty input', () => {
+        expect(capitalizeFirstAlphabeticChar('')).toBe('');
+      });
+
+      it('should capitalize single lowercase letter', () => {
+        expect(capitalizeFirstAlphabeticChar('a')).toBe('A');
+      });
+
+      it('should preserve single uppercase letter', () => {
+        expect(capitalizeFirstAlphabeticChar('A')).toBe('A');
+      });
+    });
+
+    describe('when input contains special characters', () => {
+      it('should preserve leading numbers and capitalize first alphabetic character', () => {
+        expect(capitalizeFirstAlphabeticChar('123abc')).toBe('123Abc');
+        expect(capitalizeFirstAlphabeticChar('123 main street')).toBe('123 Main Street');
+      });
+
+      it('should handle words starting with special characters', () => {
+        expect(capitalizeFirstAlphabeticChar('313@orchard')).toBe('313@Orchard');
+        expect(capitalizeFirstAlphabeticChar('@hello #world')).toBe('@Hello #World');
+      });
+
+      it('should preserve special characters throughout', () => {
+        expect(capitalizeFirstAlphabeticChar('hello!world')).toBe('Hello!world');
+      });
+    });
+
+    describe('when input has no alphabetic characters', () => {
+      it('should return the string unchanged', () => {
+        expect(capitalizeFirstAlphabeticChar('123')).toBe('123');
+        expect(capitalizeFirstAlphabeticChar('@#$')).toBe('@#$');
       });
     });
   });

@@ -1,4 +1,20 @@
 /**
+ * Capitalize the first alphabetic character of each word and lowercase the rest.
+ */
+export const capitalizeFirstAlphabeticChar = (str: string): string => {
+  if (!str) {
+    return '';
+  }
+  return str.split(' ').map((word) => {
+    const firstCharIndex = word.search(/[a-z]/i);
+    if (firstCharIndex === -1) {
+      return word;
+    }
+    return word.slice(0, firstCharIndex) + word.charAt(firstCharIndex).toUpperCase() + word.slice(firstCharIndex + 1).toLowerCase();
+  }).join(' ');
+};
+
+/**
  * Convert a string to sentence case:
  * - trims whitespace
  * - uppercases the first alphabetic character and lowercases following letters
