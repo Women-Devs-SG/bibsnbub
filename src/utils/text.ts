@@ -9,7 +9,7 @@
 
 export const transformToSentenceCase = (str: string): string => {
   if (!str) {
-    return str;
+    return '';
   }
   str = str.trim();
   const firstCharIndex = str.search(/[a-z]/i);
