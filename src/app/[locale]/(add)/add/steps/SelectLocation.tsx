@@ -43,6 +43,8 @@ const SelectLocation: React.FC<SelectLocationProps> = ({ formData, setFormData }
     postalCode: formData.postalCode || '',
     latitude: Number.parseFloat(formData.latitude) || 0,
     longitude: Number.parseFloat(formData.longitude) || 0,
+    opensAt: null,
+    closesAt: null,
   });
 
   const handleOpeningHoursChange = (value: TimeRange) => {
@@ -65,6 +67,8 @@ const SelectLocation: React.FC<SelectLocationProps> = ({ formData, setFormData }
                 postalCode: 'Your postal code',
                 latitude,
                 longitude,
+                opensAt: null,
+                closesAt: null,
               }),
             () => toast.warning('Unable to retrieve your location. Please try again.'),
           )}

@@ -10,5 +10,7 @@ export function mapOneMapToAddress(result: OneMapResult): Address {
     postalCode: result.POSTAL,
     latitude: Number.parseFloat(result.LATITUDE),
     longitude: Number.parseFloat(result.LONGITUDE),
+    opensAt: null,
+    closesAt: null,
   };
 }
