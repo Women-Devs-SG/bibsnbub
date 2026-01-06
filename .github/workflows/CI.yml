@@ -11,8 +11,6 @@ jobs:
     strategy:
       matrix:
         node-version: [20.x, 22.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
-
     name: Build with ${{ matrix.node-version }}
     runs-on: ubuntu-latest
     environment: staging
@@ -27,6 +25,15 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      # If this is a PR from a fork, secrets (including environment secrets) are not available.
+      # Skip this secret-dependent build for forked PRs to avoid zod validation errors.
+      - name: Detect fork PR and skip secret-required build
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
+        run: |
+          echo "This PR is from a fork. Environment secrets are not available; skipping secret-dependent build steps."
+          exit 0
+
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
@@ -39,7 +46,6 @@ jobs:
     strategy:
       matrix:
         node-version: [20.x]
-
     name: Run all tests
     runs-on: ubuntu-latest
     environment: staging
@@ -56,6 +62,16 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0 # Retrieve Git history, needed to verify commits
+
+      - name: Detect fork PR (for conditional steps)
+        id: detect_fork
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ] && [ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]; then
+            echo "is_fork=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_fork=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
@@ -63,7 +79,9 @@ jobs:
           cache: npm
       - run: npm ci
 
+      # Build Next.js for E2E tests and run E2E only when NOT a fork PR (these steps require secrets)
       - name: Build Next.js for E2E tests
+        if: steps.detect_fork.outputs.is_fork == 'false'
         run: npm run build
 
       - if: github.event_name == 'pull_request'
@@ -79,18 +97,12 @@ jobs:
       - name: Run unit tests
         run: npm run test -- --coverage
 
-      # - name: Upload coverage reports to Codecov
-      #   uses: codecov/codecov-action@v5
-      #   env:
-      #     CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-
       - name: Install Playwright (used for Storybook and E2E tests)
         run: npx playwright install --with-deps
 
-      # - name: Run storybook tests
-      #   run: npm run test-storybook:ci
-
+      # Run E2E (and Percy) only when NOT a fork PR
       - name: Run E2E tests
+        if: steps.detect_fork.outputs.is_fork == 'false'
         run: npx percy exec -- npm run test:e2e
         env:
           PERCY_TOKEN: ${{ secrets.PERCY_TOKEN }}
